@@ -3,17 +3,18 @@
 // Repository: https://github.com/olivercalazans/seeker
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
-
 use default_net::interface;
 
 
+
 fn get_default_iface_info() -> interface::Interface {
-    interface::get_default()
-        .expect("Error: It wasn't possible to get the interface information");
+    interface::get_default_interface()
+        .expect("Error: It wasn't possible to get the interface information")
 }
 
 
-pub fn get_my_ip() String {
+
+pub fn get_my_ip() -> String {
     let iface_info = get_default_iface_info();
     
     let ipv4 = iface_info.ipv4.first()
@@ -21,6 +22,3 @@ pub fn get_my_ip() String {
 
     ipv4.addr.to_string()
 }
-
-
-pub fn get_netmask() S
