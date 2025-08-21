@@ -3,25 +3,34 @@
 // Repository: https://github.com/olivercalazans/seeker
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
-//mod data
-//use crate::models::data::Data;
+use stc::collections::HashSet;
 
 
+#[derive(Default)]
 pub struct NetworkMapper {
-    message:String,
+    ip_range: Vec<String>,
+    active_ips: HashSet<String>,
 }
 
 
 impl NetworkMapper {
 
     pub fn new() -> Self {
-        Self {
-            message: "Command OK".to_string(),
-        }
+        Default::default()
+    }
+
+
+    pub add_active_ip(&mut self, ip:String) {
+        self.active_ips.insert(ip);
     }
 
 
     pub fn execute(&self) {
-        println!("{}", self.message)
+        self
+    }
+
+
+    pub get_ip_range(&mut self) {
+
     }
 }
