@@ -13,14 +13,14 @@ fn get_default_iface_info() -> Ipv4Net {
 
 
 
-pub fn get_my_ip() -> String {
+pub fn get_default_iface_ip() -> String {
     let ipv4 = get_default_iface_info();
     ipv4.addr.to_string()
 }
 
 
 
-pub fn get_netmask() -> String {
+pub fn get_default_iface_netmask() -> String {
     let ipv4 = get_default_iface_info();
     ipv4.netmask().to_string()
 }

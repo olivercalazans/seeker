@@ -1,30 +1,21 @@
-use std::collections::HashSet;
-
-use crate::utils::iface_info::{get_my_ip, get_netmask};
+use crate::models::data::Data;
 
 
-#[derive(Default)]
 pub struct NetworkMapper {
-    ip_range: Vec<String>,
-    active_ips: HashSet<String>,
+    data: Data,
 }
 
 
 impl NetworkMapper {
 
     pub fn new() -> Self {
-        Default::default()
-    }
-
-
-    pub fn add_active_ip(&mut self, ip:String) {
-        self.active_ips.insert(ip);
+        Self { data: Data::new() }
     }
 
 
     pub fn execute(&self) {
-        let ip = get_my_ip();
-        let netmask = get_netmask();
+        let ip = self.data.get_my_ip();
+        let netmask = self.data.get_netmask();
         println!("My IP: {}, Netmask {}", ip, netmask);
     }
 }
