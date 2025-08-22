@@ -6,11 +6,7 @@
 use std::env;
 use std::collections::HashMap;
 
-mod engine;
-use crate::engine::netmap::NetworkMapper;
-
-mod utils;
-
+use seeker::engine::netmap::NetworkMapper;
 
 
 fn main() {
