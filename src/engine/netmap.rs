@@ -5,7 +5,7 @@
 
 use std::collections::HashSet;
 
-use crate::utils::iface_info::get_my_ip;
+use crate::utils::iface_info::{get_my_ip, get_netmask};
 
 
 #[derive(Default)]
@@ -29,6 +29,7 @@ impl NetworkMapper {
 
     pub fn execute(&self) {
         let ip = get_my_ip();
-        println!("My IP: {}", ip);
+        let netmask = get_netmask();
+        println!("My IP: {}, Netmask {}", ip, netmask);
     }
 }
