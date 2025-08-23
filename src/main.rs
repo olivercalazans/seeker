@@ -1,7 +1,7 @@
 use std::env;
 use std::collections::HashMap;
-
 use seeker::engine::netmap::NetworkMapper;
+
 
 
 fn main() {
@@ -31,6 +31,7 @@ impl Command {
         self.validate_input();
         self.get_command_list();
         self.validate_command_name();
+        self.execute();
     }
 
 
@@ -66,8 +67,6 @@ impl Command {
         if self.all_commands.get(&self.command).is_none(){
             Self::exit(format!("no command '{}'", self.command))
         }
-        
-        self.execute();
     }
 
 

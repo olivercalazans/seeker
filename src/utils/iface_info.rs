@@ -1,5 +1,4 @@
 use std::net::Ipv4Addr;
-
 use default_net::interface;
 use default_net::ip::Ipv4Net;
 

@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 use ipnetwork::Ipv4Network;
-
 use crate::models::data::Data;
+
 
 
 pub struct NetworkMapper {
@@ -30,5 +30,6 @@ impl NetworkMapper {
         network.iter()
             .skip(1)
             .take(network.size() as usize - 2)
+            .filter(move |&ip| ip != self.data.get_my_ip())
     }
 }

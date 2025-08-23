@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::net::Ipv4Addr;
-
 use crate::utils::iface_info::{get_default_iface_ip, get_default_iface_netmask};
 
 
