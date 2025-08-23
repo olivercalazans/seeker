@@ -1,33 +1,33 @@
 use std::collections::HashSet;
+use std::net::Ipv4Addr;
 
 use crate::utils::iface_info::{get_default_iface_ip, get_default_iface_netmask};
 
 
 
-#[derive(Default)]
 pub struct Data {
-    my_ip:String,
-    netmask: String,
     active_ips: HashSet<String>,
+    my_ip: Ipv4Addr,
+    netmask: u8,
 }
 
 
 impl Data {
     pub fn new() -> Self {
         Self {
-            my_ip:   get_default_iface_ip(),
-            netmask: get_default_iface_netmask(),
-            ..Default::default()
+            active_ips: HashSet::new(),
+            my_ip:      get_default_iface_ip(),
+            netmask:    get_default_iface_netmask(),
         }
     }
 
 
-    pub fn get_my_ip(&self) -> String {
+    pub fn get_my_ip(&self) -> Ipv4Addr {
         self.my_ip.clone()
     }
 
 
-    pub fn get_netmask(&self) -> String {
+    pub fn get_netmask(&self) -> u8 {
         self.netmask.clone()
     }
 
