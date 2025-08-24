@@ -1,18 +1,21 @@
-use std::net::Ipv4Addr;
 use ipnetwork::Ipv4Network;
+use std::collections::HashSet;
+use std::net::Ipv4Addr;
 use crate::models::data::Data;
 
 
 
+#[derive(Default)]
 pub struct NetworkMapper {
-    data: Data,
+    responses: Vec<u8>,
+    active_ips: HashSet<Ipv4Addr>,
 }
 
 
 impl NetworkMapper {
 
     pub fn new() -> Self {
-        Self { data: Data::new() }
+        Default::default()
     }
 
 
