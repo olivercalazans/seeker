@@ -9,3 +9,5 @@ ipnetwork = "0.21.1"    # for ip range
 default-net = "0.22"    # for network interface info
 pcap = "2.3.0"          # for sniffer
 pnet = "0.35.0"         # for packet crafting
+socket2 = "0.6.0"       # *  *  *
+anyhow = "1.0.75"       # *  *  *
