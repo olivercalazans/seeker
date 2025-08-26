@@ -22,15 +22,15 @@ impl NetworkMapper {
 
 
     pub fn execute(&self) {
-        let packet_builder = PacketBuilder::new();
-        let packet_sender  = PacketSender::new();
+        let mut packet_builder = PacketBuilder::new();
+        let packet_sender      = PacketSender::new();
         
         for ip in self.get_ip_range() {
             let icmp_packet = packet_builder.build_ping_packet(ip);
-            packet_sender.send_icmp(icmp_packet, ip)?;
+            packet_sender.send_icmp(icmp_packet, ip);
 
             let tcp_packet = packet_builder.build_tcp_packet(ip);
-            packet_sender.send_tcp(tcp_packet, ip)?;
+            packet_sender.send_tcp(tcp_packet, ip);
         }
     }
 
