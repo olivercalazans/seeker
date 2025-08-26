@@ -12,3 +12,4 @@ pnet = "0.35.0"         # for packet crafting
 socket2 = "0.6.0"       # *  *  *
 anyhow = "1.0.75"       # *  *  *
 rand = "0.8.5"          # for random numbers
+nix = "0.30.1"

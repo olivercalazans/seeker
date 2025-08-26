@@ -3,7 +3,8 @@ use std::thread;
 use std::time::Duration;
 
 
-struct Sniffer {
+
+pub struct Sniffer {
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
 }
@@ -29,7 +30,7 @@ impl Sniffer {
     }
 
 
-    fn stop_sniffer(&self) {
+    fn stop_sniffer(&mut self) {
         self.running.store(false, Ordering::Relaxed);
         self.join();
     }
