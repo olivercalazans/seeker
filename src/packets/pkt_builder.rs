@@ -89,7 +89,7 @@ impl PacketBuilder {
     
     fn add_tcp_layer(&self, packet:&mut MutableTcpPacket) {
         let mut rng = rand::thread_rng();
-        packet.set_source(rng.gen_range(10000..65536));
+        packet.set_source(rng.gen_range(10000..=65535));
         packet.set_destination(self.dst_port.into());
         packet.set_sequence(rand::random::<u32>());
         packet.set_data_offset(5);
@@ -112,8 +112,8 @@ impl PacketBuilder {
     
     fn add_icmp_layer(packet:&mut MutableIcmpPacket) {
         packet.set_icmp_type(IcmpTypes::EchoRequest);
-        packet.set_identifier(std::process::id() as u16);
-        packet.set_sequence_number(1);
+        //packet.set_identifier(std::process::id() as u16);
+        //packet.set_sequence_number(1);
     }
 
 
