@@ -15,9 +15,9 @@ impl PacketSender {
     pub fn new() -> Self{
         Self {
             icmp_socket: Socket::new(Domain::IPV4, Type::from(libc::SOCK_RAW), Some(Protocol::ICMPV4))
-                .expect("[ ERROR ] It was not possible to create a ICMP socket"),
+                .expect("[ ERROR ] It was not possible to create a ICMP socket\n"),
             tcp_socket:  Socket::new(Domain::IPV4, Type::from(libc::SOCK_RAW), Some(Protocol::TCP))
-                .expect("[ ERROR ] It was not possible to create a TCP socket"),
+                .expect("[ ERROR ] It was not possible to create a TCP socket\n"),
         }
     }
 
