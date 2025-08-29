@@ -9,28 +9,34 @@ fn get_default_iface_info() -> Ipv4Net {
         .expect("[ ERROR ] It wasn't possible to get the interface information");
 
     *iface_info.ipv4.first()
-        .expect("[ ERROR ]: Interface has no IPv4 address")
+        .expect("[ ERROR ] Interface has no IPv4 address")
 }
 
 
 
 pub fn get_default_iface_ip() -> Ipv4Addr {
-    let ipv4 = get_default_iface_info();
-    ipv4.addr
+    let iface_info = get_default_iface_info();
+    iface_info.addr
 }
 
 
 
 pub fn get_default_iface_netmask() -> u8 {
-    let ipv4    = get_default_iface_info();
-    let netmask = ipv4.netmask();
-    let cidr    = ipv4_mask_to_prefix(netmask);
+    let iface_info = get_default_iface_info();
+    let netmask    = iface_info.netmask();
+    let cidr       = ipv4_mask_to_prefix(netmask);
     cidr
 }
-
-
 
 fn ipv4_mask_to_prefix(netmask: Ipv4Addr) -> u8 {
     let mask_int = u32::from(netmask);
     mask_int.count_ones() as u8
+}
+
+
+
+pub fn get_default_mac_addr() -> u8 {
+    let iface_info = get_default_iface_info();
+    println!("mac {}", iface_info.prefix_len);
+    iface_info.prefix_len
 }

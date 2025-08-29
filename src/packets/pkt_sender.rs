@@ -28,7 +28,8 @@ impl PacketSender {
     
 
     pub fn send_tcp(&self, packet: Vec<u8>, dst_ip: Ipv4Addr) {
-        self.tcp_socket.send_to(&packet, &SockAddr::from(SocketAddrV4::new(dst_ip, 0)));
+        println!("MALDITO IP: {}", dst_ip);
+        self.tcp_socket.send_to(&packet, &SockAddr::from(SocketAddrV4::new(dst_ip, 80)));
     }
 
 }
