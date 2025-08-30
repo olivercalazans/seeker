@@ -1,9 +1,11 @@
-use ipnetwork::Ipv4Network;
+use ipnet::Ipv4AddrRange;
 use std::collections::HashSet;
 use std::net::Ipv4Addr;
+use std::thread;
+use std::time::Duration;
 use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_sender::PacketSender;
-use crate::utils::iface_info::*;
+use crate::utils::iface_info::get_default_iface_info;
 
 
 
@@ -22,25 +24,18 @@ impl NetworkMapper {
 
 
     pub fn execute(&self) {
-        get_default_iface_netmask();
         let mut packet_builder = PacketBuilder::new();
         let mut packet_sender  = PacketSender::new();
         
-        for ip in self.get_ip_range() {
-            let tcp_packet = packet_builder.build_tcp_packet(ip);
+        for ip in Self::get_ip_range() {
+            let tcp_packet = packet_builder.build_tcp_packet(ip, 80);
             packet_sender.send_tcp(tcp_packet, ip);
         }
     }
 
 
-    pub fn get_ip_range(&self) -> impl Iterator<Item = Ipv4Addr> {
-        let network = Ipv4Network::new(get_default_iface_ip(), get_default_iface_netmask())
-            .expect("[ ERROR ] Invalid network");
-        
-        network.iter()
-            .skip(1)
-            .take(network.size() as usize - 2)
-            .filter(move |&ip| ip != get_default_iface_ip())
+    fn get_ip_range() -> Ipv4AddrRange {
+        get_default_iface_info().hosts()
     }
 
 }

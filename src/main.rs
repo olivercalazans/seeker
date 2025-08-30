@@ -96,4 +96,5 @@ impl Command {
         let netmapper = NetworkMapper::new();
         netmapper.execute();
     }
+    
 }

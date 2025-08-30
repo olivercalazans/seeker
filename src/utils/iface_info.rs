@@ -1,11 +1,10 @@
+use netdev::interface::get_default_interface;
+use ipnet::Ipv4Net;
 use std::net::Ipv4Addr;
-use default_net::interface;
-use default_net::ip::Ipv4Net;
 
 
-
-fn get_default_iface_info() -> Ipv4Net {
-    let iface_info = interface::get_default_interface()
+pub fn get_default_iface_info() -> Ipv4Net {
+    let iface_info = get_default_interface()
         .expect("[ ERROR ] It wasn't possible to get the interface information");
 
     *iface_info.ipv4.first()
@@ -16,27 +15,5 @@ fn get_default_iface_info() -> Ipv4Net {
 
 pub fn get_default_iface_ip() -> Ipv4Addr {
     let iface_info = get_default_iface_info();
-    iface_info.addr
-}
-
-
-
-pub fn get_default_iface_netmask() -> u8 {
-    let iface_info = get_default_iface_info();
-    let netmask    = iface_info.netmask();
-    let cidr       = ipv4_mask_to_prefix(netmask);
-    cidr
-}
-
-fn ipv4_mask_to_prefix(netmask: Ipv4Addr) -> u8 {
-    let mask_int = u32::from(netmask);
-    mask_int.count_ones() as u8
-}
-
-
-
-pub fn get_default_mac_addr() -> u8 {
-    let iface_info = get_default_iface_info();
-    println!("mac {}", iface_info.prefix_len);
-    iface_info.prefix_len
+    iface_info.addr()
 }
