@@ -5,12 +5,6 @@ pub mod engine {
 }
 
 
-pub mod models {
-    pub mod data;
-    pub mod netmap_data;
-}
-
-
 pub mod packets {
     pub mod pkt_builder;
     pub mod pkt_sender;

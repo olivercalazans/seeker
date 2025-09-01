@@ -93,7 +93,7 @@ impl Command {
 
     
     fn run_netmap() {
-        let netmapper = NetworkMapper::new();
+        let mut netmapper = NetworkMapper::new();
         netmapper.execute();
     }
     

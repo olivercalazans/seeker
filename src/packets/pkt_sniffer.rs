@@ -1,15 +1,13 @@
 use std::thread;
-use std::sync::mpsc;
-use std::net::Ipv4Addr;
+use std::sync::{Arc, Mutex};
 use pcap::{Device, Capture};
-use etherparse::{SlicedPacket, InternetSlice};
 use crate::utils::iface_info::get_default_iface_ip;
 
 
 
 #[derive(Default)]
 pub struct PacketSniffer {
-    packets:Vec
+    raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
 }
 
 
@@ -20,14 +18,11 @@ impl PacketSniffer {
     }
 
 
-    pub fn start_sniffer(&self) {
-        let (tx, rx) = mpsc::channel::<Ipv4Addr>();
+    pub fn start_sniffer(&mut self) {
+        let packets = Arc::clone(&self.raw_packets);
 
         thread::spawn(move || {
-            let dev     = PacketSniffer::get_default_iface();
-            let mut cap = PacketSniffer::open_capture(dev);
-            let filter  = PacketSniffer::get_bpf_filter_parameters();
-            cap.filter(&filter, true).unwrap();
+            let mut cap = PacketSniffer::create_sniffer();
 
             while let Ok(packet) = cap.next_packet() {
                 let data = packet.data.to_vec();
@@ -37,11 +32,23 @@ impl PacketSniffer {
     }
 
 
+
+    fn create_sniffer() -> Capture<pcap::Active> {
+        let dev     = PacketSniffer::get_default_iface();
+        let mut cap = PacketSniffer::open_capture(dev);
+        let filter  = PacketSniffer::get_bpf_filter_parameters();
+        cap.filter(&filter, true).unwrap();
+        cap
+    }
+
+
+
     fn get_default_iface() -> Device {
         Device::lookup()
             .expect("Não conseguiu achar interface padrão")
             .unwrap()
     }
+
 
 
     fn open_capture(dev: Device) -> Capture<pcap::Active> {
@@ -53,6 +60,7 @@ impl PacketSniffer {
     }
 
 
+
     fn get_bpf_filter_parameters() -> String {
         format!(
             "tcp and dst host {} and \
@@ -60,6 +68,12 @@ impl PacketSniffer {
             or (tcp[tcpflags] & tcp-rst != 0))",
             get_default_iface_ip().to_string()
         )
+    }
+
+
+
+    pub fn get_packets(&self) -> Vec<Vec<u8>> {
+        self.raw_packets.lock().unwrap().clone()
     }
 
 }

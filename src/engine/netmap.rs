@@ -12,7 +12,7 @@ use crate::utils::iface_info::get_default_iface_info;
 
 #[derive(Default)]
 pub struct NetworkMapper {
-    responses: Vec<u8>,
+    raw_packets: Vec<Vec<u8>>,
     active_ips: HashSet<Ipv4Addr>,
 }
 
@@ -24,10 +24,12 @@ impl NetworkMapper {
     }
 
 
-    pub fn execute(&self) {
+    pub fn execute(&mut self) {
         let mut packet_builder = PacketBuilder::new();
         let mut packet_sender  = PacketSender::new();
-        let packet_sniffer     = PacketSniffer::start_sniffer();
+        let mut packet_sniffer = PacketSniffer::new();
+
+        packet_sniffer.start_sniffer();
         
         for ip in Self::get_ip_range() {
             let tcp_packet = packet_builder.build_tcp_packet(ip, 80);
@@ -35,6 +37,7 @@ impl NetworkMapper {
         }
         
         thread::sleep(Duration::from_secs(10));
+        self.raw_packets = packet_sniffer.get_packets();
     }
 
 
