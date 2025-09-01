@@ -3,6 +3,7 @@ use ipnet::Ipv4Net;
 use std::net::Ipv4Addr;
 
 
+
 pub fn get_default_iface_info() -> Ipv4Net {
     let iface_info = get_default_interface()
         .expect("[ ERROR ] It wasn't possible to get the interface information");
@@ -10,7 +11,6 @@ pub fn get_default_iface_info() -> Ipv4Net {
     *iface_info.ipv4.first()
         .expect("[ ERROR ] Interface has no IPv4 address")
 }
-
 
 
 pub fn get_default_iface_ip() -> Ipv4Addr {

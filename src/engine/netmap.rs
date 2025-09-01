@@ -5,6 +5,7 @@ use std::thread;
 use std::time::Duration;
 use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_sender::PacketSender;
+use crate::packet::packet_sniffer::PacketSniffer;
 use crate::utils::iface_info::get_default_iface_info;
 
 
@@ -26,6 +27,7 @@ impl NetworkMapper {
     pub fn execute(&self) {
         let mut packet_builder = PacketBuilder::new();
         let mut packet_sender  = PacketSender::new();
+        let packet_sniffer     = PacketSniffer::start_sniffer();
         
         for ip in Self::get_ip_range() {
             let tcp_packet = packet_builder.build_tcp_packet(ip, 80);
