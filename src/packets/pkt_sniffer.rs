@@ -2,12 +2,43 @@ use std::thread;
 use std::sync::mpsc;
 use std::net::Ipv4Addr;
 use pcap::{Device, Capture};
-use etherparse::{SlicedPacket, TransportSlice, InternetSlice};
+use etherparse::{SlicedPacket, InternetSlice};
 use crate::utils::iface_info::get_default_iface_ip;
 
 
+pub struct PacketSniffer;
+
 
 impl PacketSniffer {
+
+    pub fn start_sniffer() -> anyhow::Result<mpsc::Receiver<Ipv4Addr>> {
+        let (tx, rx) = mpsc::channel::<Ipv4Addr>();
+
+        thread::spawn(move || {
+            let dev     = PacketSniffer::get_default_iface();
+            let mut cap = PacketSniffer::open_capture(dev);
+            let filter  = PacketSniffer::get_bpf_filter_parameters();
+            cap.filter(&filter, true).unwrap();
+
+            while let Ok(packet) = cap.next_packet() {
+                if let Ok(sp) = SlicedPacket::from_ethernet(packet.data) {
+                    if let Some(InternetSlice::Ipv4(ipv4)) = sp.net {
+                        let hdr    = ipv4.header();
+                        let src_ip = Ipv4Addr::new(
+                            hdr.source()[0], hdr.source()[1],
+                            hdr.source()[2], hdr.source()[3],
+                        );
+
+                        println!("IP: {}", src_ip);
+                        //let _ = tx.send(src_ip);
+                    }
+                }
+            }
+        });
+
+        Ok(rx)
+    }
+
 
     fn get_default_iface() -> Device {
         Device::lookup()
@@ -16,7 +47,7 @@ impl PacketSniffer {
     }
 
 
-    fn open_capture() -> Capture {
+    fn open_capture(dev: Device) -> Capture<pcap::Active> {
         Capture::from_device(dev).unwrap()
             .promisc(false)
             .immediate_mode(true)
@@ -34,33 +65,4 @@ impl PacketSniffer {
         )
     }
 
-
-    pub fn start_sniffer() -> anyhow::Result<mpsc::Receiver<Ipv4Addr>> {
-        let (tx, rx) = mpsc::channel::<Ipv4Addr>();
-
-        thread::spawn(move || {
-            let dev     = PacketSniffer::get_default_iface();
-            let mut cap = PacketSniffer::open_capture();
-            let filter  = PacketSniffer::get_bpf_filter_parameters();
-            cap.filter(&filter, true).unwrap();
-
-            while let Ok(packet) = cap.next_packet() {
-                if let Ok(sp) = SlicedPacket::from_ethernet(packet.data) {
-                    if let Some(InternetSlice::Ipv4(ipv4)) = sp.net {
-                        // Extrai o IP de origem
-                        let hdr = ipv4.header();
-                        let src_ip = Ipv4Addr::new(
-                            hdr.source()[0], hdr.source()[1],
-                            hdr.source()[2], hdr.source()[3],
-                        );
-
-                        // Envia o IP para a thread principal
-                        let _ = tx.send(src_ip);
-                    }
-                }
-            }
-        });
-
-        Ok(rx)
-    }
 }

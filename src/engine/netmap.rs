@@ -1,11 +1,11 @@
-use ipnet::Ipv4AddrRange;
+use std::time::Duration;
+use std::thread;
 use std::collections::HashSet;
 use std::net::Ipv4Addr;
-use std::thread;
-use std::time::Duration;
+use ipnet::Ipv4AddrRange;
 use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_sender::PacketSender;
-use crate::packet::packet_sniffer::PacketSniffer;
+use crate::packets::pkt_sniffer::PacketSniffer;
 use crate::utils::iface_info::get_default_iface_info;
 
 
@@ -33,6 +33,8 @@ impl NetworkMapper {
             let tcp_packet = packet_builder.build_tcp_packet(ip, 80);
             packet_sender.send_tcp(tcp_packet, ip);
         }
+        
+        thread::sleep(Duration::from_secs(10));
     }
 
 
