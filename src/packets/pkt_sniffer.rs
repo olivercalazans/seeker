@@ -6,12 +6,21 @@ use etherparse::{SlicedPacket, InternetSlice};
 use crate::utils::iface_info::get_default_iface_ip;
 
 
-pub struct PacketSniffer;
+
+#[derive(Default)]
+pub struct PacketSniffer {
+    packets:Vec
+}
 
 
 impl PacketSniffer {
 
-    pub fn start_sniffer() -> anyhow::Result<mpsc::Receiver<Ipv4Addr>> {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+
+    pub fn start_sniffer(&self) {
         let (tx, rx) = mpsc::channel::<Ipv4Addr>();
 
         thread::spawn(move || {
@@ -21,22 +30,10 @@ impl PacketSniffer {
             cap.filter(&filter, true).unwrap();
 
             while let Ok(packet) = cap.next_packet() {
-                if let Ok(sp) = SlicedPacket::from_ethernet(packet.data) {
-                    if let Some(InternetSlice::Ipv4(ipv4)) = sp.net {
-                        let hdr    = ipv4.header();
-                        let src_ip = Ipv4Addr::new(
-                            hdr.source()[0], hdr.source()[1],
-                            hdr.source()[2], hdr.source()[3],
-                        );
-
-                        println!("IP: {}", src_ip);
-                        //let _ = tx.send(src_ip);
-                    }
-                }
+                let data = packet.data.to_vec();
+                packets.lock().unwrap().push(data);
             }
         });
-
-        Ok(rx)
     }
 
 
