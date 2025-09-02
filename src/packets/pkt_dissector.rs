@@ -16,7 +16,6 @@ impl PacketDissector {
                     hdr.source()[0], hdr.source()[1],
                     hdr.source()[2], hdr.source()[3],
                 );
-                println!("{}", src_ip);
                 return Some(src_ip);
             }
         }

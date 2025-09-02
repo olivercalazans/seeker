@@ -37,7 +37,6 @@ impl PacketSniffer {
                 if let Ok(packet) = cap.next_packet() {
                     let data = packet.data.to_vec();
                     packets.lock().unwrap().push(data);
-                    println!("pegou um")
                 }
             }
         });

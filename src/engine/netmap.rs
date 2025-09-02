@@ -71,6 +71,7 @@ impl NetworkMapper {
 
 
     fn display_result(&self) {
+        println!("IP Address");
         for ip in &self.active_ips{
             println!("{}", ip);
         }
