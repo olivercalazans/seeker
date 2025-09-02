@@ -1,125 +1,59 @@
-use pnet::packet::MutablePacket;
-use pnet::packet::ipv4::{MutableIpv4Packet};
-use pnet::packet::tcp::{MutableTcpPacket};
-use pnet::packet::icmp::{IcmpTypes, MutableIcmpPacket};
-use rand::Rng;
+use pnet::packet::ip::{IpNextHeaderProtocols, IpNextHeaderProtocol};
+use pnet::packet::ipv4::{MutableIpv4Packet, checksum as ip_checksum};
+use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum};
 use std::net::Ipv4Addr;
-use crate::utils::iface_info::get_default_iface_ip;
+use rand::Rng;
+use crate::utils::iface_info::{get_default_iface_ip};
 
 
 
 pub struct PacketBuilder {
     src_ip: Ipv4Addr,
-    protocol: pnet::packet::ip::IpNextHeaderProtocol,
-    total_len: u8,
-    dst_port: u8
 }
 
 
 impl PacketBuilder {
 
     pub fn new() -> Self {
-        Self {
-            src_ip:    get_default_iface_ip(),
-            protocol:  pnet::packet::ip::IpNextHeaderProtocol(0),
-            total_len: 0,
-            dst_port:  80,
-        }
+        Self { src_ip: get_default_iface_ip() }
     }
 
 
-    pub fn build_tcp_packet(&mut self, dst_ip:Ipv4Addr) -> Vec<u8> {
-        self.protocol  = pnet::packet::ip::IpNextHeaderProtocols::Tcp;
-        self.total_len = 40;
-        let mut buffer = vec![0u8; 40];
+    pub fn build_tcp_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
+        let mut buffer = [0u8; 40];
+        let mut rng    = rand::thread_rng();
+        let src_port   = rng.gen_range(10000..=65535);
 
-        let mut ip_pkt = MutableIpv4Packet::new(&mut buffer).unwrap();
-        self.add_ip_layer(&mut ip_pkt, dst_ip);
-
-        let mut tcp_pkt = MutableTcpPacket::new(ip_pkt.payload_mut()).unwrap();
-        self.add_tcp_layer(&mut tcp_pkt);
-
-        self.calculate_tcp_checksum(&mut tcp_pkt, dst_ip);
-        Self::calculate_ip_checksum(&mut ip_pkt);
-
-        buffer
-    }
-
-
-
-    pub fn build_ping_packet(&mut self, dst_ip:Ipv4Addr) -> Vec<u8> {
-        self.protocol  = pnet::packet::ip::IpNextHeaderProtocols::Icmp;
-        self.total_len = 28;
-        let mut buffer = vec![0u8; 28];
+        self.add_ip_layer(&mut buffer, dst_ip, IpNextHeaderProtocols::Tcp);
         
-        let mut ip_pkt = MutableIpv4Packet::new(&mut buffer).unwrap();
-        self.add_ip_layer(&mut ip_pkt, dst_ip);
+        let mut tcp_header = MutableTcpPacket::new(&mut buffer[20..]).unwrap();
+        tcp_header.set_source(src_port);
+        tcp_header.set_destination(dst_port);
+        tcp_header.set_sequence(1);
+        tcp_header.set_flags(TcpFlags::SYN);
+        tcp_header.set_window(64240);
+        tcp_header.set_data_offset(5);
 
-        let mut icmp_pkt = MutableIcmpPacket::new(ip_pkt.payload_mut()).unwrap();
-        Self::add_icmp_layer(&mut icmp_pkt);
-        
-        Self::calculate_icmp_checksum(&mut icmp_pkt);
-        Self::calculate_ip_checksum(&mut ip_pkt);
+        let pseudo_header_sum = tcp_checksum(&tcp_header.to_immutable(), &self.src_ip, &dst_ip);
+        tcp_header.set_checksum(pseudo_header_sum);
         
         buffer
     }
 
 
 
+    fn add_ip_layer(&self, buffer: &mut [u8], dst_ip:Ipv4Addr, protocol: IpNextHeaderProtocol) {
+        let mut ip_header = MutableIpv4Packet::new(&mut buffer[..20]).unwrap();
+        ip_header.set_version(4);
+        ip_header.set_header_length(5);
+        ip_header.set_total_length(40);
+        ip_header.set_ttl(64);
+        ip_header.set_next_level_protocol(protocol);
+        ip_header.set_source(self.src_ip);
+        ip_header.set_destination(dst_ip);
 
-    fn add_ip_layer(&self, packet:&mut MutableIpv4Packet, dst_ip:Ipv4Addr) {
-        packet.set_version(4);
-        packet.set_header_length(5);
-        packet.set_total_length(self.total_len.into());
-        packet.set_ttl(64);
-        packet.set_next_level_protocol(self.protocol);
-        packet.set_source(self.src_ip);
-        packet.set_destination(dst_ip);
-        packet.set_identification(rand::random::<u16>());
-    }
-    
-
-    fn calculate_ip_checksum(packet:&mut MutableIpv4Packet) {
-        let ip_checksum = pnet::packet::ipv4::checksum(&packet.to_immutable());
-        packet.set_checksum(ip_checksum);
-    }
-
-
-
-    
-    fn add_tcp_layer(&self, packet:&mut MutableTcpPacket) {
-        let mut rng = rand::thread_rng();
-        packet.set_source(rng.gen_range(10000..=65535));
-        packet.set_destination(self.dst_port.into());
-        packet.set_sequence(rand::random::<u32>());
-        packet.set_data_offset(5);
-        packet.set_flags(0x02);
-        packet.set_window(64240);
-    }
-
-
-    fn calculate_tcp_checksum(&self, packet:&mut MutableTcpPacket, dst_ip:Ipv4Addr) {
-        let tcp_checksum = pnet::packet::tcp::ipv4_checksum(
-            &packet.to_immutable(),
-            &self.src_ip,
-            &dst_ip
-        );
-        packet.set_checksum(tcp_checksum);
-    }
-
-
-
-    
-    fn add_icmp_layer(packet:&mut MutableIcmpPacket) {
-        packet.set_icmp_type(IcmpTypes::EchoRequest);
-        //packet.set_identifier(std::process::id() as u16);
-        //packet.set_sequence_number(1);
-    }
-
-
-    fn calculate_icmp_checksum(packet:&mut MutableIcmpPacket) {
-        let icmp_checksum = pnet::packet::icmp::checksum(&packet.to_immutable());
-        packet.set_checksum(icmp_checksum);
+        let checksum = ip_checksum(&ip_header.to_immutable());
+        ip_header.set_checksum(checksum);
     }
 
 }

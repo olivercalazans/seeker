@@ -37,7 +37,7 @@ impl Command {
 
 
     fn exit(error: impl Into<String>) -> ! {
-        eprintln!("Error: {}", error.into());
+        eprintln!("[ ERROR ] {}", error.into());
         std::process::exit(1);
     }
 
@@ -93,7 +93,8 @@ impl Command {
 
     
     fn run_netmap() {
-        let netmapper = NetworkMapper::new();
+        let mut netmapper = NetworkMapper::new();
         netmapper.execute();
     }
+    
 }
