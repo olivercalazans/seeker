@@ -1,5 +1,6 @@
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use pcap::{Device, Capture};
 use crate::utils::iface_info::get_default_iface_ip;
 
@@ -8,6 +9,8 @@ use crate::utils::iface_info::get_default_iface_ip;
 #[derive(Default)]
 pub struct PacketSniffer {
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
+    running: Arc<AtomicBool>,
+    handle: Option<thread::JoinHandle<()>>,
 }
 
 
@@ -20,15 +23,20 @@ impl PacketSniffer {
 
     pub fn start_sniffer(&mut self) {
         let packets = Arc::clone(&self.raw_packets);
+        let running = Arc::clone(&self.running);
 
-        thread::spawn(move || {
+        let handle = thread::spawn(move || {
             let mut cap = PacketSniffer::create_sniffer();
 
-            while let Ok(packet) = cap.next_packet() {
-                let data = packet.data.to_vec();
-                packets.lock().unwrap().push(data);
+            while running.load(Ordering::Relaxed) {
+                if let Ok(packet) = cap.next_packet() {
+                    let data = packet.data.to_vec();
+                    packets.lock().unwrap().push(data);
+                }
             }
         });
+
+        self.handle = Some(handle);
     }
 
 
@@ -68,6 +76,16 @@ impl PacketSniffer {
             or (tcp[tcpflags] & tcp-rst != 0))",
             get_default_iface_ip().to_string()
         )
+    }
+
+
+
+    pub fn stop(&mut self) {
+        self.running.store(false, Ordering::Relaxed);
+
+        if let Some(handle) = self.handle.take() {
+            handle.join().unwrap();
+        }
     }
 
 

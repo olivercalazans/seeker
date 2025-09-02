@@ -37,6 +37,8 @@ impl NetworkMapper {
         }
         
         thread::sleep(Duration::from_secs(10));
+        
+        packet_sniffer.stop();
         self.raw_packets = packet_sniffer.get_packets();
     }
 
