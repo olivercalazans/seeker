@@ -17,3 +17,11 @@ pub fn get_default_iface_ip() -> Ipv4Addr {
     let iface_info = get_default_iface_info();
     iface_info.addr()
 }
+
+
+pub fn get_network() -> String {
+    let iface_info   = get_default_iface_info();
+    let network_addr = iface_info.network();
+    let cidr         = iface_info.prefix_len();
+    format!("{}/{}", network_addr, cidr)
+}

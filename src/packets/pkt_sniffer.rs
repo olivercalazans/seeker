@@ -2,7 +2,7 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use pcap::{Device, Capture};
-use crate::utils::iface_info::get_default_iface_ip;
+use crate::utils::iface_info::{get_default_iface_ip, get_network};
 
 
 
@@ -17,11 +17,11 @@ pub struct PacketSniffer {
 impl PacketSniffer {
 
     pub fn new() -> Self {
-        PacketSniffer {
-        raw_packets: Arc::new(Mutex::new(Vec::new())),
-        running: Arc::new(AtomicBool::new(false)),
-        handle: None,
-    }
+        Self {
+            raw_packets: Arc::new(Mutex::new(Vec::new())),
+            running: Arc::new(AtomicBool::new(false)),
+            handle: None,
+        }
     }
 
 
@@ -52,6 +52,8 @@ impl PacketSniffer {
         let mut cap = PacketSniffer::open_capture(dev);
         let filter  = PacketSniffer::get_bpf_filter_parameters();
         cap.filter(&filter, true).unwrap();
+        
+        let cap = cap.setnonblock().unwrap();
         cap
     }
 
@@ -77,10 +79,9 @@ impl PacketSniffer {
 
     fn get_bpf_filter_parameters() -> String {
         format!(
-            "tcp and dst host {} and \
-            ((tcp[tcpflags] & (tcp-syn|tcp-ack) == (tcp-syn|tcp-ack)) \
-            or (tcp[tcpflags] & tcp-rst != 0))",
-            get_default_iface_ip().to_string()
+            "tcp and dst host {} and src net {}",
+            get_default_iface_ip().to_string(),
+            get_network()
         )
     }
 
