@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::net::Ipv4Addr;
 use ipnet::Ipv4AddrRange;
 use crate::packets::pkt_builder::PacketBuilder;
+use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
 use crate::packets::pkt_sniffer::PacketSniffer;
 use crate::utils::iface_info::get_default_iface_info;
@@ -24,7 +25,16 @@ impl NetworkMapper {
     }
 
 
+
     pub fn execute(&mut self) {
+        self.send_probes();
+        self.process_raw_packets();
+        self.display_result();
+    }
+
+
+
+    fn send_probes(&mut self) {
         let mut packet_builder = PacketBuilder::new();
         let mut packet_sender  = PacketSender::new();
         let mut packet_sniffer = PacketSniffer::new();
@@ -43,8 +53,27 @@ impl NetworkMapper {
     }
 
 
+
     fn get_ip_range() -> Ipv4AddrRange {
         get_default_iface_info().hosts()
+    }
+
+
+
+    fn process_raw_packets(&mut self) {
+        for packet in &self.raw_packets {
+            if let Some(src_ip) = PacketDissector::get_src_ip(&packet) {
+                self.active_ips.insert(src_ip);
+            }
+        }
+    }
+
+
+
+    fn display_result(&self) {
+        for ip in &self.active_ips{
+            println!("{}", ip);
+        }
     }
 
 }

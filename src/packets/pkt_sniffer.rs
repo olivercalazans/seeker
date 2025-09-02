@@ -17,11 +17,16 @@ pub struct PacketSniffer {
 impl PacketSniffer {
 
     pub fn new() -> Self {
-        Default::default()
+        PacketSniffer {
+        raw_packets: Arc::new(Mutex::new(Vec::new())),
+        running: Arc::new(AtomicBool::new(false)),
+        handle: None,
+    }
     }
 
 
     pub fn start_sniffer(&mut self) {
+        self.running.store(true, Ordering::Relaxed);
         let packets = Arc::clone(&self.raw_packets);
         let running = Arc::clone(&self.running);
 
@@ -32,6 +37,7 @@ impl PacketSniffer {
                 if let Ok(packet) = cap.next_packet() {
                     let data = packet.data.to_vec();
                     packets.lock().unwrap().push(data);
+                    println!("pegou um")
                 }
             }
         });
