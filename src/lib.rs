@@ -1,6 +1,7 @@
 //pub mod arg_parser;
 
 pub mod engine {
+    pub mod portscan;
     pub mod netmap;
 }
 
