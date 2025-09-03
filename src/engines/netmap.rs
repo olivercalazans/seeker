@@ -3,6 +3,7 @@ use std::thread;
 use std::collections::HashSet;
 use std::net::Ipv4Addr;
 use ipnet::Ipv4AddrRange;
+use crate::engines::_command_exec::CommandExec;
 use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
@@ -18,18 +19,19 @@ pub struct NetworkMapper {
 }
 
 
+impl CommandExec for NetworkMapper {
+    fn execute(&mut self) {
+        self.send_probes();
+        self.process_raw_packets();
+        self.display_result();
+    }
+}
+
+
 impl NetworkMapper {
 
     pub fn new() -> Self {
         Default::default()
-    }
-
-
-
-    pub fn execute(&mut self) {
-        self.send_probes();
-        self.process_raw_packets();
-        self.display_result();
     }
 
 

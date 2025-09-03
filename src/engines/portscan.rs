@@ -1,6 +1,7 @@
 use std::time::Duration;
 use std::thread;
 use std::net::Ipv4Addr;
+use crate::engines::_command_exec::CommandExec;
 use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
@@ -15,7 +16,7 @@ struct PortScanner {
 }
 
 
-impl PortScanner {
+impl CommandExec for PortScanner {
 
     pub fn new() -> Self {
         Default::default()

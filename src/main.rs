@@ -1,6 +1,7 @@
 use std::env;
 use std::collections::HashMap;
-use seeker::engine::netmap::NetworkMapper;
+use seeker::engines::_command_exec::CommandExec;
+use seeker::engines::netmap::NetworkMapper;
 
 
 
@@ -13,7 +14,7 @@ fn main() {
 
 #[derive(Default)]
 struct Command {
-    all_commands: HashMap<String, fn()>,
+    all_commands: HashMap<String, fn() -> Box<dyn CommandExec>>,
     arguments: Vec<String>,
     command: String,
 }
@@ -31,7 +32,7 @@ impl Command {
         self.validate_input();
         self.get_command_list();
         self.validate_command_name();
-        self.execute();
+        self.execute_function();
     }
 
 
@@ -57,8 +58,7 @@ impl Command {
 
 
     fn get_command_list(&mut self) {
-        self.all_commands.insert("--help".to_string(), Self::display_help);
-        self.all_commands.insert("netmap".to_string(), Self::run_netmap);
+        self.all_commands.insert("netmap".to_string(), || Box::new(NetworkMapper::new()));
     }
 
 
@@ -71,30 +71,11 @@ impl Command {
 
 
 
-    fn execute(&self) {
-        let cmd = self.all_commands.get(&self.command).unwrap();
-        cmd()
-    }
-
-
-    
-    fn display_help() {
-        println!(
-            "# Seeker is a tool for network exploration\n\
-             # For more information visite the repository:\n\
-             # https://github.com/olivercalazans/seeker\n\
-             \n\
-             Available commands:
-        ");
-        println!("  > netmap: Network Mapping");
-        println!("\nOBS.: Use --help with the command for more details")
-    }
-
-
-    
-    fn run_netmap() {
-        let mut netmapper = NetworkMapper::new();
-        netmapper.execute();
+    fn execute_function(&mut self) {
+        if let Some(constructor) = self.all_commands.get(&self.command) {
+            let mut cmd = constructor();
+            cmd.execute();
+        }
     }
     
 }
