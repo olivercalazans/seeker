@@ -19,7 +19,7 @@ impl PacketBuilder {
     }
 
 
-    pub fn build_tcp_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
+    pub fn build_tcp_packet(&self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
         let mut buffer = [0u8; 40];
         let mut rng    = rand::thread_rng();
         let src_port   = rng.gen_range(10000..=65535);
