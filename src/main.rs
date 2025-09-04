@@ -59,6 +59,7 @@ impl Command {
 
     fn get_command_list(&mut self) {
         self.all_commands.insert("netmap".to_string(), || Box::new(NetworkMapper::new()));
+        //self.all_commands.insert("pscan".to_string(), || Box::new(PortScanner::new()));
     }
 
 
@@ -74,7 +75,7 @@ impl Command {
     fn execute_function(&mut self) {
         if let Some(constructor) = self.all_commands.get(&self.command) {
             let mut cmd = constructor();
-            cmd.execute();
+            cmd.execute(self.arguments.clone());
         }
     }
     

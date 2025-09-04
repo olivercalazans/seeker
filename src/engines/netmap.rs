@@ -19,13 +19,15 @@ pub struct NetworkMapper {
 }
 
 
+
 impl CommandExec for NetworkMapper {
-    fn execute(&mut self) {
+    fn execute(&mut self, arguments:Vec<String>) {
         self.send_probes();
         self.process_raw_packets();
         self.display_result();
     }
 }
+
 
 
 impl NetworkMapper {

@@ -16,16 +16,19 @@ struct PortScanner {
 }
 
 
+
 impl CommandExec for PortScanner {
+    fn execute(&mut self, target_ip: String) {
+        self.send_probes();
+    }
+}
+
+
+
+impl PortScanner {
 
     pub fn new() -> Self {
         Default::default()
-    }
-
-
-
-    pub fn execute(&mut self, target_ip: String) {
-        self.send_probes();
     }
 
 
