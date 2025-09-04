@@ -1,5 +1,6 @@
 use std::env;
 use std::collections::HashMap;
+use seeker::utils::error_msg::display_error_and_exit;
 use seeker::engines::_command_exec::CommandExec;
 use seeker::engines::netmap::NetworkMapper;
 
@@ -37,18 +38,11 @@ impl Command {
 
 
 
-    fn exit(error: impl Into<String>) -> ! {
-        eprintln!("[ ERROR ] {}", error.into());
-        std::process::exit(1);
-    }
-
-
-
     fn validate_input(&mut self) {
         let mut input: Vec<String> = env::args().collect();
         
         if input.get(1).is_none() {
-            Self::exit("No input found");
+            display_error_and_exit("No input found");
         }
 
         self.command   = input.remove(1);
@@ -66,7 +60,7 @@ impl Command {
 
     fn validate_command_name(&self) {
         if self.all_commands.get(&self.command).is_none(){
-            Self::exit(format!("no command '{}'", self.command))
+            display_error_and_exit(format!("no command '{}'", self.command))
         }
     }
 

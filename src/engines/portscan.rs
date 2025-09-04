@@ -6,6 +6,7 @@ use crate::packets::pkt_builder::PacketBuilder;
 use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
 use crate::packets::pkt_sniffer::PacketSniffer;
+use crate::utils::error_msg::display_error_and_exit;
 
 
 
@@ -18,7 +19,8 @@ struct PortScanner {
 
 
 impl CommandExec for PortScanner {
-    fn execute(&mut self, target_ip: String) {
+    fn execute(&mut self, arguments: Vec<String>) {
+        self.validate_arguments(arguments);
         self.send_probes();
     }
 }
@@ -29,6 +31,19 @@ impl PortScanner {
 
     pub fn new() -> Self {
         Default::default()
+    }
+
+
+
+    fn validate_arguments(&mut self, mut arguments: Vec<String>) {
+        if arguments.len() < 2 {
+            display_error_and_exit("No IP entered");
+        }
+
+        let ip = arguments.remove(1);
+
+        self.target_ip = ip.parse::<Ipv4Addr>()
+            .unwrap_or_else(|_| { display_error_and_exit("Invalid IP: {}", ip); });
     }
 
 

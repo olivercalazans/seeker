@@ -2,8 +2,8 @@
 
 pub mod engines {
     pub mod _command_exec;
-    //pub mod portscan;
     pub mod netmap;
+    //pub mod portscan;
 }
 
 
@@ -16,5 +16,6 @@ pub mod packets {
 
 
 pub mod utils {
+    pub mod error_msg;
     pub mod iface_info;
 }
