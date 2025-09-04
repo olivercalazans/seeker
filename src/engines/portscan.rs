@@ -49,16 +49,16 @@ impl PortScanner {
 
 
     fn send_and_receive(&mut self) {
-        let (mut pkt_builder, mut pkt_sender, pkt_sniffer) = Self::setup_tools();
-        self.send_probes(&mut pkt_builder, &mut pkt_sender);
+        let (pkt_builder, mut pkt_sender, pkt_sniffer) = Self::setup_tools();
+        self.send_probes(pkt_builder, &mut pkt_sender);
         self.raw_packets = Self::finish_tools(pkt_sniffer);
     }
 
 
 
     fn setup_tools() -> (PacketBuilder, PacketSender, PacketSniffer) {
-        let mut pkt_builder = PacketBuilder::new();
-        let mut pkt_sender  = PacketSender::new();
+        let pkt_builder     = PacketBuilder::new();
+        let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new();
 
         pkt_sniffer.start_sniffer();
@@ -67,7 +67,7 @@ impl PortScanner {
 
 
 
-    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut PacketSender) {
+    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
         for port in 1..=100 {
             let tcp_packet = pkt_builder.build_tcp_packet(self.target_ip, port);
             pkt_sender.send_tcp(tcp_packet, self.target_ip);
@@ -76,10 +76,10 @@ impl PortScanner {
 
 
 
-    fn finish_tools(mut sniffer: PacketSniffer) -> Vec<Vec<u8>> {
+    fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
         thread::sleep(Duration::from_secs(10));
-        sniffer.stop();
-        sniffer.get_packets()
+        pkt_sniffer.stop();
+        pkt_sniffer.get_packets()
     }
 
 }
