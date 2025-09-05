@@ -2,7 +2,7 @@ use std::env;
 use std::collections::HashMap;
 use seeker::engines::_command_exec::CommandExec;
 use seeker::engines::netmap::NetworkMapper;
-//use seeker::engines::portscan::PortScanner;
+use seeker::engines::portscan::PortScanner;
 use seeker::utils::error_msg::display_error_and_exit;
 
 
@@ -54,7 +54,7 @@ impl Command {
 
     fn get_command_list(&mut self) {
         self.all_commands.insert("netmap".to_string(), || Box::new(NetworkMapper::new()));
-        //self.all_commands.insert("pscan".to_string(), || Box::new(PortScanner::new()));
+        self.all_commands.insert("pscan".to_string(), || Box::new(PortScanner::new()));
     }
 
 

@@ -47,7 +47,7 @@ impl NetworkMapper {
     fn setup_tools() -> (PacketBuilder, PacketSender, PacketSniffer) {
         let pkt_builder     = PacketBuilder::new();
         let pkt_sender      = PacketSender::new();
-        let mut pkt_sniffer = PacketSniffer::new();
+        let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
 
         pkt_sniffer.start_sniffer();
         (pkt_builder, pkt_sender, pkt_sniffer)
@@ -90,7 +90,6 @@ impl NetworkMapper {
 
             self.active_ips.push(info);
         }
-
     }
 
 

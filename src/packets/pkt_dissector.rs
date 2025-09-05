@@ -7,6 +7,17 @@ pub struct PacketDissector;
 
 impl PacketDissector {
 
+    pub fn get_src_port(packet: &[u8]) -> String {
+        if let Ok(sliced) = SlicedPacket::from_ethernet(packet) {
+            if let Some(etherparse::TransportSlice::Tcp(tcp)) = sliced.transport {
+                return tcp.source_port().to_string();
+            }
+        }
+        "unknown".to_string()
+    }
+
+    
+
     pub fn get_src_ip(packet: &[u8]) -> String {
         if let Ok(sliced) = SlicedPacket::from_ethernet(packet) {
             if let Some(InternetSlice::Ipv4(ipv4)) = sliced.net {

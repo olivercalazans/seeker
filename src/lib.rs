@@ -3,7 +3,7 @@
 pub mod engines {
     pub mod _command_exec;
     pub mod netmap;
-    //pub mod portscan;
+    pub mod portscan;
 }
 
 

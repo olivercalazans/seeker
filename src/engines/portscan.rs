@@ -10,10 +10,10 @@ use crate::utils::error_msg::display_error_and_exit;
 
 
 
-#[derive(Default)]
-struct PortScanner {
+pub struct PortScanner {
     raw_packets: Vec<Vec<u8>>,
     target_ip: Ipv4Addr,
+    open_ports: Vec<String>,
 }
 
 
@@ -21,7 +21,9 @@ struct PortScanner {
 impl CommandExec for PortScanner {
     fn execute(&mut self, arguments: Vec<String>) {
         self.validate_arguments(arguments);
-        self.send_probes();
+        self.send_and_receive();
+        self.process_raw_packets();
+        self.display_result();
     }
 }
 
@@ -30,7 +32,11 @@ impl CommandExec for PortScanner {
 impl PortScanner {
 
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            raw_packets: Vec::new(),
+            target_ip: Ipv4Addr::new(0, 0, 0, 0),
+            open_ports: Vec::new(),
+        }
     }
 
 
@@ -43,25 +49,29 @@ impl PortScanner {
         let ip = arguments.remove(1);
 
         self.target_ip = ip.parse::<Ipv4Addr>()
-            .unwrap_or_else(|_| { display_error_and_exit("Invalid IP: {}", ip); });
+            .unwrap_or_else(|_| { 
+                display_error_and_exit(format!("Invalid IP: {}", ip));
+            });
     }
 
 
 
     fn send_and_receive(&mut self) {
-        let (pkt_builder, mut pkt_sender, pkt_sniffer) = Self::setup_tools();
-        self.send_probes(pkt_builder, &mut pkt_sender);
-        self.raw_packets = Self::finish_tools(pkt_sniffer);
+        let (pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
+        self.send_probes(&pkt_builder, &mut pkt_sender);
+        self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
 
 
-    fn setup_tools() -> (PacketBuilder, PacketSender, PacketSniffer) {
+    fn setup_tools(&self) -> (PacketBuilder, PacketSender, PacketSniffer) {
         let pkt_builder     = PacketBuilder::new();
         let pkt_sender      = PacketSender::new();
-        let mut pkt_sniffer = PacketSniffer::new();
+        let mut pkt_sniffer = PacketSniffer::new("pscan".to_string(), self.target_ip.to_string());
 
         pkt_sniffer.start_sniffer();
+        thread::sleep(Duration::from_secs_f32(0.5));
+        
         (pkt_builder, pkt_sender, pkt_sniffer)
     }
 
@@ -71,15 +81,34 @@ impl PortScanner {
         for port in 1..=100 {
             let tcp_packet = pkt_builder.build_tcp_packet(self.target_ip, port);
             pkt_sender.send_tcp(tcp_packet, self.target_ip);
+            thread::sleep(Duration::from_secs_f32(0.02));
         }
     }
 
 
 
     fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
-        thread::sleep(Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(5));
         pkt_sniffer.stop();
         pkt_sniffer.get_packets()
+    }
+
+
+
+    fn process_raw_packets(&mut self) {
+        for packet in &self.raw_packets {
+            let port = PacketDissector::get_src_port(packet);
+            self.open_ports.push(port);
+        }
+    }
+
+
+
+    fn display_result(&self) {
+        println!("Open ports from {}", self.target_ip);
+        for port in &self.open_ports{
+            println!(" -> {}", port);
+        }
     }
 
 }
