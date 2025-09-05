@@ -1,5 +1,6 @@
 use std::time::Duration;
 use std::thread;
+use std::io::{self, Write};
 use ipnet::Ipv4AddrRange;
 use crate::engines::_command_exec::CommandExec;
 use crate::packets::pkt_builder::PacketBuilder;
@@ -7,6 +8,7 @@ use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
 use crate::packets::pkt_sniffer::PacketSniffer;
 use crate::utils::iface_info::get_default_iface_info;
+use crate::utils::network_info::get_host_name;
 
 
 
@@ -55,17 +57,30 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
-        for ip in Self::get_ip_range() {
-            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
-            pkt_sender.send_tcp(tcp_packet, ip);
-        }
+    fn get_ip_range() -> Ipv4AddrRange {
+        get_default_iface_info().hosts()
     }
 
 
 
-    fn get_ip_range() -> Ipv4AddrRange {
-        get_default_iface_info().hosts()
+    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+        let ip_range    = Self::get_ip_range();
+        let total:usize = ip_range.clone().count();
+
+        for (i, ip) in ip_range.enumerate() {
+            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
+            pkt_sender.send_tcp(tcp_packet, ip);
+            
+            Self::display_progress(i+1, total, ip.to_string());
+            thread::sleep(Duration::from_secs_f32(0.02));
+        }
+    }
+
+
+    
+    fn display_progress(index: usize, total: usize, ip:String) {
+        print!("\rPackets sent: {}/{} - {}", index, total, ip);
+        io::stdout().flush().unwrap();
     }
 
 
@@ -88,6 +103,9 @@ impl NetworkMapper {
             let mac_addr = PacketDissector::get_src_mac(&packet);
             info.push(mac_addr);
 
+            let device_name = get_host_name(&src_ip);
+            info.push(device_name);
+
             self.active_ips.push(info);
         }
     }
@@ -95,10 +113,17 @@ impl NetworkMapper {
 
 
     fn display_result(&self) {
-        println!("IP and MAC Address");
+        Self::display_header();
         for host in &self.active_ips{
-            println!("{} {}", host[0], host[1]);
+            println!("{:<15}  {}  {}", host[0], host[1], host[2]);
         }
+    }
+
+
+
+    fn display_header() {
+        println!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname");
+        println!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8));
     }
 
 }

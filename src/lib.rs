@@ -18,4 +18,5 @@ pub mod packets {
 pub mod utils {
     pub mod error_msg;
     pub mod iface_info;
+    pub mod network_info;
 }
