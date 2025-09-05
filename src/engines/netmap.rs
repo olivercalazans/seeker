@@ -8,6 +8,7 @@ use crate::packets::pkt_dissector::PacketDissector;
 use crate::packets::pkt_sender::PacketSender;
 use crate::packets::pkt_sniffer::PacketSniffer;
 use crate::utils::iface_info::get_default_iface_info;
+use crate::utils::network_info::get_host_name;
 
 
 
@@ -70,17 +71,18 @@ impl NetworkMapper {
             let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
             pkt_sender.send_tcp(tcp_packet, ip);
             
-            Self::display_progress(i+1, total);
+            Self::display_progress(i+1, total, ip.to_string());
             thread::sleep(Duration::from_secs_f32(0.02));
         }
-        println!("");
     }
 
 
-    fn display_progress(index: usize, total: usize) {
-        print!("\rPackets sent: {}/{}", index, total);
+    
+    fn display_progress(index: usize, total: usize, ip:String) {
+        print!("\rPackets sent: {}/{} - {}", index, total, ip);
         io::stdout().flush().unwrap();
     }
+
 
     
     fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
@@ -101,6 +103,9 @@ impl NetworkMapper {
             let mac_addr = PacketDissector::get_src_mac(&packet);
             info.push(mac_addr);
 
+            let device_name = get_host_name(&src_ip);
+            info.push(device_name);
+
             self.active_ips.push(info);
         }
     }
@@ -110,15 +115,15 @@ impl NetworkMapper {
     fn display_result(&self) {
         Self::display_header();
         for host in &self.active_ips{
-            println!("{:<15}  {}", host[0], host[1]);
+            println!("{:<15}  {}  {}", host[0], host[1], host[2]);
         }
     }
 
 
 
     fn display_header() {
-        println!("{:<15}  {:<17}", "IP Address", "MAC Address");
-        println!("{}  {}", "-".repeat(15), "-".repeat(17));
+        println!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname");
+        println!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8));
     }
 
 }

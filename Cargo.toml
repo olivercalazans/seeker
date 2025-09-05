@@ -12,3 +12,4 @@ pnet = "0.35.0"         # for packet crafting
 anyhow = "1.0.75"       # 
 rand = "0.8.5"          # for random numbers
 etherparse = "0.19.0"
+dns-lookup = "3.0.0"
