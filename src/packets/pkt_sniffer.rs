@@ -6,33 +6,39 @@ use crate::utils::iface_info::{get_default_iface_ip, get_network};
 
 
 
-#[derive(Default)]
 pub struct PacketSniffer {
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
+    my_ip: String,
+    cmd_filter: String,
+    src_ip: String
 }
+
 
 
 impl PacketSniffer {
 
-    pub fn new() -> Self {
+    pub fn new(command: String, target_ip: String) -> Self {
         Self {
             raw_packets: Arc::new(Mutex::new(Vec::new())),
             running: Arc::new(AtomicBool::new(false)),
             handle: None,
+            my_ip: get_default_iface_ip().to_string(),
+            cmd_filter: command,
+            src_ip: target_ip,
         }
     }
+
 
 
     pub fn start_sniffer(&mut self) {
         self.running.store(true, Ordering::Relaxed);
         let packets = Arc::clone(&self.raw_packets);
         let running = Arc::clone(&self.running);
+        let mut cap = self.create_sniffer();
 
         let handle = thread::spawn(move || {
-            let mut cap = PacketSniffer::create_sniffer();
-
             while running.load(Ordering::Relaxed) {
                 if let Ok(packet) = cap.next_packet() {
                     let data = packet.data.to_vec();
@@ -46,10 +52,10 @@ impl PacketSniffer {
 
 
 
-    fn create_sniffer() -> Capture<pcap::Active> {
+    fn create_sniffer(&self) -> Capture<pcap::Active> {
         let dev     = PacketSniffer::get_default_iface();
         let mut cap = PacketSniffer::open_capture(dev);
-        let filter  = PacketSniffer::get_bpf_filter_parameters();
+        let filter  = self.get_bpf_filter_parameters();
         cap.filter(&filter, true).unwrap();
         
         let cap = cap.setnonblock().unwrap();
@@ -76,12 +82,12 @@ impl PacketSniffer {
 
 
 
-    fn get_bpf_filter_parameters() -> String {
-        format!(
-            "tcp and dst host {} and src net {}",
-            get_default_iface_ip().to_string(),
-            get_network()
-        )
+    fn get_bpf_filter_parameters(&self) -> String {
+        match self.cmd_filter.as_str() {
+            "netmap" => format!("tcp and dst host {} and src net {}", self.my_ip, get_network()),
+            "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", self.my_ip, self.src_ip),
+            _        => panic!("[ ERROR ] Unknown filter: {}", self.cmd_filter),
+        }
     }
 
 
