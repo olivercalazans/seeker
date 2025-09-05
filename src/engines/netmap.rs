@@ -1,7 +1,5 @@
 use std::time::Duration;
 use std::thread;
-use std::collections::HashSet;
-use std::net::Ipv4Addr;
 use ipnet::Ipv4AddrRange;
 use crate::engines::_command_exec::CommandExec;
 use crate::packets::pkt_builder::PacketBuilder;
@@ -15,7 +13,7 @@ use crate::utils::iface_info::get_default_iface_info;
 #[derive(Default)]
 pub struct NetworkMapper {
     raw_packets: Vec<Vec<u8>>,
-    active_ips: HashSet<Ipv4Addr>,
+    active_ips: Vec<Vec<String>>,
 }
 
 
@@ -82,18 +80,25 @@ impl NetworkMapper {
 
     fn process_raw_packets(&mut self) {
         for packet in &self.raw_packets {
-            if let Some(src_ip) = PacketDissector::get_src_ip(&packet) {
-                self.active_ips.insert(src_ip);
-            }
+            let mut info: Vec<String> = Vec::new();
+
+            let src_ip = PacketDissector::get_src_ip(&packet);
+            info.push(src_ip.to_string());
+
+            let mac_addr = PacketDissector::get_src_mac(&packet);
+            info.push(mac_addr);
+
+            self.active_ips.push(info);
         }
+
     }
 
 
 
     fn display_result(&self) {
-        println!("IP Address");
-        for ip in &self.active_ips{
-            println!("{}", ip);
+        println!("IP and MAC Address");
+        for host in &self.active_ips{
+            println!("{} {}", host[0], host[1]);
         }
     }
 
