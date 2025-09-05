@@ -1,5 +1,6 @@
 use std::time::Duration;
 use std::thread;
+use std::io::{self, Write};
 use ipnet::Ipv4AddrRange;
 use crate::engines::_command_exec::CommandExec;
 use crate::packets::pkt_builder::PacketBuilder;
@@ -55,19 +56,31 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
-        for ip in Self::get_ip_range() {
-            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
-            pkt_sender.send_tcp(tcp_packet, ip);
-        }
-    }
-
-
-
     fn get_ip_range() -> Ipv4AddrRange {
         get_default_iface_info().hosts()
     }
 
+
+
+    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+        let ip_range    = Self::get_ip_range();
+        let total:usize = ip_range.clone().count();
+
+        for (i, ip) in ip_range.enumerate() {
+            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
+            pkt_sender.send_tcp(tcp_packet, ip);
+            
+            Self::display_progress(i+1, total);
+            thread::sleep(Duration::from_secs_f32(0.02));
+        }
+        println!("");
+    }
+
+
+    fn display_progress(index: usize, total: usize) {
+        print!("\rPackets sent: {}/{}", index, total);
+        io::stdout().flush().unwrap();
+    }
 
     
     fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
@@ -95,10 +108,17 @@ impl NetworkMapper {
 
 
     fn display_result(&self) {
-        println!("IP and MAC Address");
+        Self::display_header();
         for host in &self.active_ips{
-            println!("{} {}", host[0], host[1]);
+            println!("{:<15}  {}", host[0], host[1]);
         }
+    }
+
+
+
+    fn display_header() {
+        println!("{:<15}  {:<17}", "IP Address", "MAC Address");
+        println!("{}  {}", "-".repeat(15), "-".repeat(17));
     }
 
 }
