@@ -1,5 +1,4 @@
-use dns_lookup::lookup_addr;
-use std::net::IpAddr;
+use crate::prelude::{IpAddr, lookup_addr};
 
 
 

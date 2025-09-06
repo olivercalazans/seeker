@@ -1,6 +1,4 @@
-use netdev::interface::get_default_interface;
-use ipnet::Ipv4Net;
-use std::net::Ipv4Addr;
+use crate::prelude::{Ipv4Addr, Ipv4Net, get_default_interface};
 
 
 

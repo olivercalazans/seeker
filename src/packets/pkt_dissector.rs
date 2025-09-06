@@ -1,9 +1,8 @@
-use etherparse::{SlicedPacket, InternetSlice, LinkSlice};
+use crate::prelude::{SlicedPacket, InternetSlice, LinkSlice};
 
 
 
 pub struct PacketDissector;
-
 
 impl PacketDissector {
 
