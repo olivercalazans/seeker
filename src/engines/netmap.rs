@@ -1,6 +1,6 @@
 use crate::prelude::{
     Duration, thread, io, Write, Ipv4AddrRange,
-    CommandExec, PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
+    PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
     get_default_iface_info, get_host_name
 };
 
@@ -13,21 +13,18 @@ pub struct NetworkMapper {
 }
 
 
+impl NetworkMapper {
 
-impl CommandExec for NetworkMapper {
-    fn execute(&mut self, arguments:Vec<String>) {
+    pub fn new(args_vec:Vec<String>) -> Self {
+        Default::default()
+    }
+
+
+
+    pub fn execute(&mut self) {
         self.send_and_receive();
         self.process_raw_packets();
         self.display_result();
-    }
-}
-
-
-
-impl NetworkMapper {
-
-    pub fn new() -> Self {
-        Default::default()
     }
 
 

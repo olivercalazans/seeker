@@ -12,11 +12,14 @@ pub use std::{
 
 
 
+pub use clap::Parser;
 pub use ipnet::{Ipv4AddrRange, Ipv4Net};
 pub use dns_lookup::lookup_addr;
 pub use etherparse::{SlicedPacket, InternetSlice, LinkSlice};
 pub use netdev::interface::get_default_interface;
 pub use pcap::{Device, Capture};
+pub use rand::Rng;
+
 pub use pnet::{
     packet::{
         ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
@@ -25,13 +28,15 @@ pub use pnet::{
     },
     transport::{transport_channel, TransportChannelType::Layer3, TransportSender},
 };
-pub use rand::Rng;
 
 
 
+
+pub use crate::arg_parser::{
+    pscan_parser::PortScanArgs,
+};
 
 pub use crate::engines::{
-    _command_exec::CommandExec,
     netmap::NetworkMapper,
     portscan::PortScanner
 };
