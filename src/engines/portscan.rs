@@ -1,6 +1,6 @@
 use crate::prelude::{
-    Duration, thread, PortScanArgs, Parser,
-    PacketBuilder, PacketDissector, PacketSender, PacketSniffer
+    Duration, thread, io, Write, PortScanArgs, Parser,
+    PacketBuilder, PacketDissector, PacketSender, PacketSniffer, get_host_name
 };
 
 
@@ -57,11 +57,22 @@ impl PortScanner {
 
 
     fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+        let ip: String = self.args.target_ip.to_string();
+
         for port in 1..=100 {
             let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
+            
+            Self::display_progress(port, &ip);
             thread::sleep(Duration::from_secs_f32(0.02));
         }
+    }
+
+
+
+    fn display_progress(port: u16, ip: &String) {
+        print!("\rPackets sent to port: {} - {}", port, ip);
+        io::stdout().flush().unwrap();
     }
 
 
@@ -84,7 +95,9 @@ impl PortScanner {
 
 
     fn display_result(&self) {
-        println!("Open ports from {}", self.args.target_ip);
+        let device_name = get_host_name(&self.args.target_ip.to_string());
+
+        println!("\nOpen ports from {} ({})", device_name, self.args.target_ip);
         for port in &self.open_ports{
             println!(" -> {}", port);
         }
