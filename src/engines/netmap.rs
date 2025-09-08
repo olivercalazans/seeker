@@ -1,7 +1,7 @@
 use crate::prelude::{
-    Duration, thread, io, Write, Ipv4AddrRange,
+    Duration, thread, Ipv4AddrRange,
     PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
-    get_default_iface_info, get_host_name
+    get_default_iface_info, get_host_name, display_progress
 };
 
 
@@ -62,16 +62,9 @@ impl NetworkMapper {
             let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
             pkt_sender.send_tcp(tcp_packet, ip);
             
-            Self::display_progress(i+1, total, ip.to_string());
+            display_progress(format!("Packets sent: {}/{} - {}", i+1, total, ip.to_string()));
             thread::sleep(Duration::from_secs_f32(0.02));
         }
-    }
-
-
-    
-    fn display_progress(index: usize, total: usize, ip:String) {
-        print!("\rPackets sent: {}/{} - {}", index, total, ip);
-        io::stdout().flush().unwrap();
     }
 
 

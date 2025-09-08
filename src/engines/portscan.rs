@@ -1,6 +1,7 @@
 use crate::prelude::{
-    Duration, thread, io, Write, PortScanArgs, Parser,
-    PacketBuilder, PacketDissector, PacketSender, PacketSniffer, get_host_name
+    Duration, thread, PortScanArgs, Parser,
+    PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
+    get_host_name, display_progress
 };
 
 
@@ -63,16 +64,9 @@ impl PortScanner {
             let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
             
-            Self::display_progress(port, &ip);
+            display_progress(format!("Packet sent to port: {} - {}", port, ip));
             thread::sleep(Duration::from_secs_f32(0.02));
         }
-    }
-
-
-
-    fn display_progress(port: u16, ip: &String) {
-        print!("\rPackets sent to port: {} - {}", port, ip);
-        io::stdout().flush().unwrap();
     }
 
 

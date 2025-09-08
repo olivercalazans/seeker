@@ -49,7 +49,7 @@ pub use crate::packets::{
 };
 
 pub use crate::utils::{
-    error_msg::display_error_and_exit,
+    displays::{display_error_and_exit, display_progress},
     iface_info::{get_default_iface_info, get_default_iface_ip, get_network},
     network_info::get_host_name
 };
