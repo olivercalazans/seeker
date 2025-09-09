@@ -1,7 +1,7 @@
 use crate::prelude::{
-    Duration, thread, io, Write, Ipv4AddrRange,
-    CommandExec, PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
-    get_default_iface_info, get_host_name
+    Duration, thread, Ipv4AddrRange,
+    PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
+    get_default_iface_info, get_host_name, display_progress
 };
 
 
@@ -13,21 +13,18 @@ pub struct NetworkMapper {
 }
 
 
+impl NetworkMapper {
 
-impl CommandExec for NetworkMapper {
-    fn execute(&mut self, arguments:Vec<String>) {
+    pub fn new(args_vec:Vec<String>) -> Self {
+        Default::default()
+    }
+
+
+
+    pub fn execute(&mut self) {
         self.send_and_receive();
         self.process_raw_packets();
         self.display_result();
-    }
-}
-
-
-
-impl NetworkMapper {
-
-    pub fn new() -> Self {
-        Default::default()
     }
 
 
@@ -65,16 +62,9 @@ impl NetworkMapper {
             let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
             pkt_sender.send_tcp(tcp_packet, ip);
             
-            Self::display_progress(i+1, total, ip.to_string());
+            display_progress(format!("Packets sent: {}/{} - {}", i+1, total, ip.to_string()));
             thread::sleep(Duration::from_secs_f32(0.02));
         }
-    }
-
-
-    
-    fn display_progress(index: usize, total: usize, ip:String) {
-        print!("\rPackets sent: {}/{} - {}", index, total, ip);
-        io::stdout().flush().unwrap();
     }
 
 
