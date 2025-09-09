@@ -1,5 +1,5 @@
 use crate::prelude::{
-    BTreeSet, Duration, thread, PortScanArgs, Parser,
+    BTreeSet, Duration, thread, SliceRandom, PortScanArgs, Parser,
     PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
     get_host_name, display_progress, display_error_and_exit
 };
@@ -63,20 +63,31 @@ impl PortScanner {
             let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
             
-            display_progress(format!("Packet sent to port: {} - {}", port, ip));
+            display_progress(format!("Packet sent to port: {:<5} - {:<15}", port, ip));
             thread::sleep(Duration::from_secs_f32(0.02));
         }
     }
 
 
 
-    fn get_ports(&self) -> BTreeSet<u16> {
-        if self.args.ports.is_none() {
-            return (1..=100).collect();
-        }
+    fn get_ports(&self) -> Vec<u16> {
+        let mut ports_vec: Vec<u16> = match self.args.ports {
+            Some(_) => self.generate_specified_ports(),
+            None   => (1..=100).collect(),
+        };
 
+        if self.args.random {
+            Self::shuffle_ports(&mut ports_vec);
+        }
+        
+        ports_vec
+    }
+
+
+
+    fn generate_specified_ports(&self) -> Vec<u16> {
         let mut ports: BTreeSet<u16> = BTreeSet::new();
-        let parts: Vec<&str>        = self.args.ports.as_ref().clone().unwrap().split(",").collect();
+        let parts: Vec<&str>         = self.args.ports.as_ref().clone().unwrap().split(",").collect();
         
         for part in parts {
             if part.contains("-") {
@@ -86,7 +97,8 @@ impl PortScanner {
             }
         }
 
-        ports
+        let ports_vec: Vec<u16> = ports.into_iter().collect();
+        ports_vec
     }
 
 
@@ -111,6 +123,13 @@ impl PortScanner {
         });
 
         port
+    }
+
+
+
+    fn shuffle_ports(ports_vec: &mut Vec<u16>) {
+        let mut rng = rand::thread_rng();
+        ports_vec.shuffle(&mut rng);
     }
 
 

@@ -18,7 +18,7 @@ pub use dns_lookup::lookup_addr;
 pub use etherparse::{SlicedPacket, InternetSlice, LinkSlice};
 pub use netdev::interface::get_default_interface;
 pub use pcap::{Device, Capture};
-pub use rand::Rng;
+pub use rand::{Rng, seq::SliceRandom};
 
 pub use pnet::{
     packet::{
