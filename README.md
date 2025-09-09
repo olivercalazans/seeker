@@ -15,5 +15,18 @@
 
 
 
+## Dependencies
+This project uses Cargo, Rust's package manager and build system, to manage dependencies.  
+If you don't have Cargo installed, follow the steps on the [official Rust installation page](https://www.rust-lang.org/tools/install).
+
+All dependencies are managed by Cargo, so there's no need to install them manually.  
+You can find them in the [Cargo.toml](https://github.com/olivercalazans/seeker/blob/main/Cargo.toml) file.
+
+> [!IMPORTANT]
+> Although the code is designed to run on Linux systems, it can also be used on Windows via WSL (Windows Subsystem for Linux).
+<br>
+
+
+
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
