@@ -1,17 +1,19 @@
 use std::collections::BTreeSet;
+pub use rand::seq::SliceRandom;
+use crate::utils::display_error_and_exit;
 
 
-struct PortGenerator;
+pub struct PortGenerator;
 
 impl PortGenerator {
 
-    pub fn get_ports(&self) -> Vec<u16> {
-        let mut ports_vec: Vec<u16> = match self.args.ports {
-            Some(_) => self.generate_specified_ports(),
-            None   => (1..=100).collect(),
+    pub fn get_ports(ports_str: Option<String>, random: bool) -> Vec<u16> {
+        let mut ports_vec: Vec<u16> = match ports_str {
+            Some(p) => Self::generate_specified_ports(p),
+            None    => (1..=100).collect(),
         };
 
-        if self.args.random {
+        if random {
             Self::shuffle_ports(&mut ports_vec);
         }
         
@@ -20,9 +22,9 @@ impl PortGenerator {
 
 
 
-    fn generate_specified_ports(&self) -> Vec<u16> {
+    fn generate_specified_ports(ports_str: String) -> Vec<u16> {
         let mut ports: BTreeSet<u16> = BTreeSet::new();
-        let parts: Vec<&str>         = self.args.ports.as_ref().clone().unwrap().split(",").collect();
+        let parts: Vec<&str>         = ports_str.split(",").collect();
         
         for part in parts {
             if part.contains("-") {

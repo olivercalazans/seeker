@@ -1,4 +1,4 @@
-pub use std::net::IpAddr;
+pub use std::net::Ipv4Addr;
 pub use clap::Parser;
 
 

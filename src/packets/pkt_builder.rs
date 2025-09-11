@@ -5,9 +5,9 @@ use pnet::{
         ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
         ipv4::{MutableIpv4Packet, checksum as ip_checksum},
         tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
-    },
+    }
 };
-use crate::utils::get_default_iface_ip,
+use crate::utils::get_default_iface_ip;
 
 
 

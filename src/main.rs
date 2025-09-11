@@ -1,9 +1,11 @@
-pub use std::env;
-pub use crate::engines::{
-    netmap::NetworkMapper,
-    port_scanner::portscan::PortScanner,
-};
-pub use crate::utils::displays::display_error_and_exit;
+pub mod arg_parser;
+pub mod engines;
+pub mod packets;
+pub mod utils;
+
+use std::env;
+use crate::engines::{NetworkMapper, PortScanner};
+use crate::utils::display_error_and_exit;
 
 
 

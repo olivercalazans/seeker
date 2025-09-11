@@ -1,9 +1,8 @@
 use std::{thread, time::Duration};
 use clap::Parser;
-use rand::seq::SliceRandom;
-use arg_parser::pscan_parser::PortScanArgs;
+use crate::arg_parser::PortScanArgs;
 use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{PortGenerator, display_error_and_exit, display_progress, get_host_name};
+use crate::utils::{PortGenerator, display_progress, get_host_name};
 
 
 
@@ -57,7 +56,7 @@ impl PortScanner {
 
     fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
         let ip    = self.args.target_ip.to_string();
-        let ports = self.get_ports(); 
+        let ports = PortGenerator::get_ports(self.args.ports.clone(), self.args.random.clone()); 
 
         for port in ports {
             let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);

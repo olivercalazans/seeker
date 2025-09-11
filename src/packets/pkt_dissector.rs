@@ -11,6 +11,7 @@ impl PacketDissector {
             if let Some(etherparse::TransportSlice::Tcp(tcp)) = sliced.transport {
                 return tcp.source_port().to_string();
             }
+            return "unknown".to_string()
         }
         "unknown".to_string()
     }

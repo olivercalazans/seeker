@@ -1,4 +1,4 @@
-use std::net:Ipv4Addr;
+use std::net::Ipv4Addr;
 use pnet::{
     packet::{
         ip::IpNextHeaderProtocols,
