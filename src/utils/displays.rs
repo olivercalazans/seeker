@@ -1,5 +1,4 @@
-use crate::prelude::{ io, Write };
-
+use std::io::{self, Write};
 
 
 pub fn display_error_and_exit(error: impl Into<String>) -> ! {

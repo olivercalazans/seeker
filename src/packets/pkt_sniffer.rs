@@ -1,6 +1,10 @@
-use crate::prelude::{
-    thread, Arc, Mutex, AtomicBool, Ordering, Device, Capture, get_default_iface_ip, get_network
+use std::{
+    thread,
+    sync::{Arc, Mutex},
+    sync::atomic::{AtomicBool, Ordering},
 };
+use pcap::{Device, Capture};
+use crate::utils::{get_default_iface_ip, get_network};
 
 
 

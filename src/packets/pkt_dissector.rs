@@ -1,4 +1,4 @@
-use crate::prelude::{SlicedPacket, InternetSlice, LinkSlice};
+use etherparse::{SlicedPacket, InternetSlice, LinkSlice};
 
 
 
@@ -11,6 +11,7 @@ impl PacketDissector {
             if let Some(etherparse::TransportSlice::Tcp(tcp)) = sliced.transport {
                 return tcp.source_port().to_string();
             }
+            return "unknown".to_string()
         }
         "unknown".to_string()
     }
