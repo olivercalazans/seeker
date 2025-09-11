@@ -1,8 +1,7 @@
-use crate::prelude::{
-    Duration, thread, Ipv4AddrRange,
-    PacketBuilder, PacketDissector, PacketSender, PacketSniffer,
-    get_default_iface_info, get_host_name, display_progress
-};
+use std::{thread, time::Duration};
+use ipnet::Ipv4AddrRange;
+use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::utils::{display_progress, get_default_iface_info, get_host_name};
 
 
 

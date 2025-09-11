@@ -7,7 +7,10 @@ pub mod prelude;
 
 pub mod engines {
     pub mod netmap;
-    pub mod portscan;
+    
+    pub mod port_scanner {
+        pub mod portscan;
+    }
 }
 
 

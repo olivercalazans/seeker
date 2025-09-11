@@ -1,7 +1,13 @@
-use crate::prelude::{
-    Ipv4Addr, IpNextHeaderProtocols, IpNextHeaderProtocol, MutableIpv4Packet, ip_checksum,
-    MutableTcpPacket, TcpFlags, tcp_checksum, Rng, get_default_iface_ip
+use std::net::Ipv4Addr;
+use rand::Rng;
+use pnet::{
+    packet::{
+        ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
+        ipv4::{MutableIpv4Packet, checksum as ip_checksum},
+        tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
+    },
 };
+use crate::utils::get_default_iface_ip,
 
 
 

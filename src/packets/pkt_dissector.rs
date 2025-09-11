@@ -1,4 +1,4 @@
-use crate::prelude::{SlicedPacket, InternetSlice, LinkSlice};
+use etherparse::{SlicedPacket, InternetSlice, LinkSlice};
 
 
 
