@@ -2,7 +2,7 @@ use std::{thread, time::Duration};
 use clap::Parser;
 use crate::arg_parser::PortScanArgs;
 use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{PortGenerator, display_progress, get_host_name};
+use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGenerator};
 
 
 
@@ -55,16 +55,24 @@ impl PortScanner {
 
 
     fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
-        let ip    = self.args.target_ip.to_string();
-        let ports = PortGenerator::get_ports(self.args.ports.clone(), self.args.random.clone()); 
+        let (ip, ports, delays) = self.get_data_for_loop();
 
-        for port in ports {
-            let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);
+        for (port, delay) in ports.iter().zip(delays.iter())  {
+            let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, *port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
             
-            display_progress(format!("Packet sent to port: {:<5} - {:<15}", port, ip));
-            thread::sleep(Duration::from_secs_f32(0.02));
+            display_progress(format!("Packet sent to {} port {:<5} - delay {:.2}", ip, port, delay));
+            thread::sleep(Duration::from_secs_f32(*delay));
         }
+    }
+
+
+
+    fn get_data_for_loop(&self) -> (String, Vec<u16>, Vec<f32>) {
+        let ip     = self.args.target_ip.to_string();
+        let ports  = PortGenerator::get_ports(self.args.ports.clone(), self.args.random.clone());
+        let delays = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), ports.len());
+        (ip, ports, delays)
     }
 
 
