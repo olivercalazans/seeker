@@ -54,7 +54,7 @@ impl Command {
     fn execute_function(&mut self) {
         match self.command.as_str() {
             "pscan" => {
-                let mut scanner = PortScanner::new(self.arguments.clone());
+                let mut scanner = PortScanner::new(self.arguments.clone(), false);
                 scanner.execute();
             }
             "netmap" => {

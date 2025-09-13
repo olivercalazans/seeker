@@ -2,6 +2,7 @@ use std::{thread, time::Duration};
 use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::NetMapArgs;
+use crate::engines::PortScanner;
 use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
 use crate::utils::{display_progress, get_default_iface_info, get_host_name, DelayTimeGenerator};
 
@@ -64,6 +65,7 @@ impl NetworkMapper {
             display_progress(msg);
             thread::sleep(Duration::from_secs_f32(*delay));
         }
+        println!("");
     }
 
 
@@ -84,7 +86,7 @@ impl NetworkMapper {
 
     
     fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
-        thread::sleep(Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(3));
         pkt_sniffer.stop();
         pkt_sniffer.get_packets()
     }
@@ -93,16 +95,12 @@ impl NetworkMapper {
 
     fn process_raw_packets(&mut self) {
         for packet in &self.raw_packets {
-            let mut info: Vec<String> = Vec::new();
-
-            let src_ip = PacketDissector::get_src_ip(&packet);
-            info.push(src_ip.to_string());
-
-            let mac_addr = PacketDissector::get_src_mac(&packet);
-            info.push(mac_addr);
-
-            let device_name = get_host_name(&src_ip);
-            info.push(device_name);
+            let mut info = Self::get_data_from_packet(packet);
+            
+            if self.args.portscan {
+                let ports = Self::scan_ports(info[0].clone());
+                info.push(ports);
+            }
 
             self.active_ips.push(info);
         }
@@ -110,18 +108,50 @@ impl NetworkMapper {
 
 
 
+    fn get_data_from_packet(packet: &Vec<u8>) -> Vec<String> {
+        let mut info: Vec<String> = Vec::new();
+
+        let src_ip = PacketDissector::get_src_ip(packet);
+        info.push(src_ip.to_string());
+
+        let mac_addr = PacketDissector::get_src_mac(packet);
+        info.push(mac_addr);
+
+        let device_name = get_host_name(&src_ip);
+        info.push(device_name);
+
+        info
+    }
+
+
+
+    fn scan_ports(ip: String) -> String {
+        let args      = vec!["pscan".to_string(), ip];
+        let mut pscan = PortScanner::new(args, true);
+        let ports_vec = pscan.execute();
+        if ports_vec.is_empty() { return "None".to_string() }
+        ports_vec.join(", ")
+    }
+
+
+
     fn display_result(&self) {
         Self::display_header();
+
         for host in &self.active_ips{
-            println!("{:<15}  {}  {}", host[0], host[1], host[2]);
+            println!("{}", format!("{:<15}  {}  {}", host[0], host[1], host[2]));
+
+            if self.args.portscan { 
+                println!("{}\n", format!("Open ports: {:#}", host[3]));
+            }
         }
     }
 
 
 
     fn display_header() {
-        println!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname");
-        println!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8));
+        println!("{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
+        println!("{}", format!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8)));
     }
 
 }

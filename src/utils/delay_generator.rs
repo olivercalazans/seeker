@@ -56,5 +56,4 @@ impl DelayTimeGenerator {
         number32
     }
 
-
 }
