@@ -1,12 +1,14 @@
 use std::{thread, time::Duration};
+use clap::Parser;
 use ipnet::Ipv4AddrRange;
+use crate::arg_parser::NetMapArgs;
 use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{display_progress, get_default_iface_info, get_host_name};
+use crate::utils::{display_progress, get_default_iface_info, get_host_name, DelayTimeGenerator};
 
 
 
-#[derive(Default)]
 pub struct NetworkMapper {
+    args: NetMapArgs,
     raw_packets: Vec<Vec<u8>>,
     active_ips: Vec<Vec<String>>,
 }
@@ -15,7 +17,11 @@ pub struct NetworkMapper {
 impl NetworkMapper {
 
     pub fn new(args_vec:Vec<String>) -> Self {
-        Default::default()
+        Self {
+            args: NetMapArgs::parse_from(args_vec),
+            raw_packets: Vec::new(),
+            active_ips: Vec::new(),
+        }
     }
 
 
@@ -47,23 +53,32 @@ impl NetworkMapper {
 
 
 
-    fn get_ip_range() -> Ipv4AddrRange {
-        get_default_iface_info().hosts()
+    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+        let (ip_range, total, delays) = self.get_data_for_loop();
+
+        for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
+            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
+            pkt_sender.send_tcp(tcp_packet, ip);
+            
+            let msg = format!("Packets sent: {}/{} - {:<15} - delay: {:.2}", i+1, total, ip.to_string(), delay);
+            display_progress(msg);
+            thread::sleep(Duration::from_secs_f32(*delay));
+        }
     }
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
-        let ip_range    = Self::get_ip_range();
-        let total:usize = ip_range.clone().count();
+    fn get_data_for_loop(&self) -> (Ipv4AddrRange, usize, Vec<f32>) {
+        let ip_range = Self::get_ip_range();
+        let total    = ip_range.clone().count();
+        let delays   = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), total);
+        (ip_range, total, delays)
+    }
 
-        for (i, ip) in ip_range.enumerate() {
-            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
-            pkt_sender.send_tcp(tcp_packet, ip);
-            
-            display_progress(format!("Packets sent: {}/{} - {}", i+1, total, ip.to_string()));
-            thread::sleep(Duration::from_secs_f32(0.02));
-        }
+
+
+    fn get_ip_range() -> Ipv4AddrRange {
+        get_default_iface_info().hosts()
     }
 
 
