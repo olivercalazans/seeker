@@ -22,6 +22,7 @@ impl PortScanner {
             return_data,
             raw_packets: Vec::new(),
             open_ports: Vec::new(),
+
         }
     }
 
@@ -68,6 +69,7 @@ impl PortScanner {
             display_progress(format!("Packet sent to {} port {:<5} - delay: {:.2}", ip, port, delay));
             thread::sleep(Duration::from_secs_f32(*delay));
         }
+        println!("");
     }
 
 
@@ -100,11 +102,10 @@ impl PortScanner {
 
     fn display_result(&self) {
         let device_name = get_host_name(&self.args.target_ip.to_string());
+        let ports       = self.open_ports.join(", ");
 
         println!("\nOpen ports from {} ({})", device_name, self.args.target_ip);
-        for port in &self.open_ports{
-            println!(" -> {}", port);
-        }
+        println!("{}", ports);
     }
 
 }

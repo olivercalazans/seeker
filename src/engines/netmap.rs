@@ -150,7 +150,7 @@ impl NetworkMapper {
 
 
     fn display_header() {
-        println!("{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
+        println!("\n{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
         println!("{}", format!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8)));
     }
 
