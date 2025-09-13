@@ -8,6 +8,7 @@ use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGene
 
 pub struct PortScanner {
     args: PortScanArgs,
+    return_data: bool,
     raw_packets: Vec<Vec<u8>>,
     open_ports: Vec<String>,
 }
@@ -15,20 +16,24 @@ pub struct PortScanner {
 
 impl PortScanner {
 
-    pub fn new(args_vec: Vec<String>) -> Self {
+    pub fn new(args_vec: Vec<String>, return_data: bool) -> Self {
         Self {
             args: PortScanArgs::parse_from(args_vec),
+            return_data,
             raw_packets: Vec::new(),
             open_ports: Vec::new(),
+
         }
     }
 
 
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self) -> Vec<String> {
         self.send_and_receive();
         self.process_raw_packets();
+        if self.return_data { return self.open_ports.clone() }
         self.display_result();
+        Vec::new()
     }
 
 
@@ -61,9 +66,10 @@ impl PortScanner {
             let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, *port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
             
-            display_progress(format!("Packet sent to {} port {:<5} - delay {:.2}", ip, port, delay));
+            display_progress(format!("Packet sent to {} port {:<5} - delay: {:.2}", ip, port, delay));
             thread::sleep(Duration::from_secs_f32(*delay));
         }
+        println!("");
     }
 
 
@@ -78,7 +84,7 @@ impl PortScanner {
 
 
     fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(3));
         pkt_sniffer.stop();
         pkt_sniffer.get_packets()
     }
@@ -96,11 +102,10 @@ impl PortScanner {
 
     fn display_result(&self) {
         let device_name = get_host_name(&self.args.target_ip.to_string());
+        let ports       = self.open_ports.join(", ");
 
         println!("\nOpen ports from {} ({})", device_name, self.args.target_ip);
-        for port in &self.open_ports{
-            println!(" -> {}", port);
-        }
+        println!("{}", ports);
     }
 
 }

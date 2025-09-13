@@ -17,4 +17,9 @@ pub struct NetMapArgs {
     #[arg(short, long)]
     pub delay: Option<String>,
 
+
+    /// Scan ports on active hosts
+    #[arg(short = 'P', long = "Portscan")]
+    pub portscan: bool,
+
 }
