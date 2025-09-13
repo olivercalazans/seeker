@@ -6,7 +6,7 @@ pub struct DelayTimeGenerator;
 
 impl DelayTimeGenerator {
 
-    pub fn get_delay_list(delay_arg: Option<String>, quantity: u64) -> Vec<f32> {
+    pub fn get_delay_list(delay_arg: Option<String>, quantity: usize) -> Vec<f32> {
         if delay_arg.is_none() {
             return Self::fixed_delay_range("0.02".to_string(), quantity)
         }
@@ -22,7 +22,7 @@ impl DelayTimeGenerator {
 
 
 
-    fn fixed_delay_range(value_str: String, quantity: u64) -> Vec<f32> {
+    fn fixed_delay_range(value_str: String, quantity: usize) -> Vec<f32> {
         let value            = Self::validate_number(&value_str);
         let vector: Vec<f32> = vec![value; quantity];
         vector
@@ -30,7 +30,7 @@ impl DelayTimeGenerator {
 
 
 
-    fn random_delay_range(range_str: String, quantity: u64) -> Vec<f32> {
+    fn random_delay_range(range_str: String, quantity: usize) -> Vec<f32> {
         let parts: Vec<&str> = range_str.split("-").collect();
         let min              = Self::validate_number(&parts[0]);
         let max              = Self::validate_number(&parts[1]);
@@ -50,7 +50,7 @@ impl DelayTimeGenerator {
 
 
     fn validate_number(number_str: &str) -> f32 {        
-        let number32: f32 = texto.parse().unwrap_or_else(|_| {
+        let number32: f32 = number_str.parse().unwrap_or_else(|_| {
             display_error_and_exit(format!("Invalid number: {}", number_str));
         });
         number32

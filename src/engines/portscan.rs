@@ -57,21 +57,21 @@ impl PortScanner {
     fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
         let (ip, ports, delays) = self.get_data_for_loop();
 
-        for (port, delay) in ports.zip(delays) {
-            let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, port);
+        for (port, delay) in ports.iter().zip(delays.iter())  {
+            let tcp_packet = pkt_builder.build_tcp_packet(self.args.target_ip, *port);
             pkt_sender.send_tcp(tcp_packet, self.args.target_ip);
             
-            display_progress(format!("Packet sent to port: {:<5} - {:<15}", port, ip));
-            thread::sleep(Duration::from_secs_f32(delay));
+            display_progress(format!("Packet sent to {} port {:<5} - delay {:.2}", ip, port, delay));
+            thread::sleep(Duration::from_secs_f32(*delay));
         }
     }
 
 
 
-    fn get_data_for_loop(&self) -> (String, Vec<u32>, Vec<f32>) {
+    fn get_data_for_loop(&self) -> (String, Vec<u16>, Vec<f32>) {
         let ip     = self.args.target_ip.to_string();
         let ports  = PortGenerator::get_ports(self.args.ports.clone(), self.args.random.clone());
-        let delays = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), ports.len())
+        let delays = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), ports.len());
         (ip, ports, delays)
     }
 

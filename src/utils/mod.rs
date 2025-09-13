@@ -1,5 +1,5 @@
 pub mod delay_generator;
-pub use DelayTimeGenerator;
+pub use delay_generator::DelayTimeGenerator;
 
 pub mod displays;
 pub use displays::{display_error_and_exit, display_progress};
