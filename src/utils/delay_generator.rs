@@ -22,18 +22,18 @@ impl DelayTimeGenerator {
 
 
 
-    fn fixed_delay_range(number_str: String, quantity: u64) {
-        let value            = Self::validate_number(value_str);
+    fn fixed_delay_range(value_str: String, quantity: u64) -> Vec<f32> {
+        let value            = Self::validate_number(&value_str);
         let vector: Vec<f32> = vec![value; quantity];
         vector
     }
 
 
 
-    fn random_delay_range(range_str: String, quantity: u64) Vec<f32> {
-        let parts: Vec<&str> = port_range.split("-").collect();
-        let min              = Self::validate_number(parts[0]);
-        let max              = Self::validate_number(parts[1]);
+    fn random_delay_range(range_str: String, quantity: u64) -> Vec<f32> {
+        let parts: Vec<&str> = range_str.split("-").collect();
+        let min              = Self::validate_number(&parts[0]);
+        let max              = Self::validate_number(&parts[1]);
 
         if min >= max || parts.len() > 2 {
             display_error_and_exit(format!("Invalid range: {}", range_str));
@@ -49,7 +49,7 @@ impl DelayTimeGenerator {
 
 
 
-    fn validate_number(number_str: String) -> f32 {        
+    fn validate_number(number_str: &str) -> f32 {        
         let number32: f32 = texto.parse().unwrap_or_else(|_| {
             display_error_and_exit(format!("Invalid number: {}", number_str));
         });

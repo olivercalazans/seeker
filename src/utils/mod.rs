@@ -1,3 +1,6 @@
+pub mod delay_generator;
+pub use DelayTimeGenerator;
+
 pub mod displays;
 pub use displays::{display_error_and_exit, display_progress};
 
