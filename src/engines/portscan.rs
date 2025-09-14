@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 use clap::Parser;
 use crate::arg_parser::PortScanArgs;
-use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
 use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGenerator};
 
 

@@ -1,7 +1,6 @@
 pub use clap::Parser;
 
 
-
 #[derive(Parser)]
 #[command(name = "netmap", about = "Network Mapper")]
 pub struct NetMapArgs {

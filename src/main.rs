@@ -1,11 +1,11 @@
 pub mod arg_parser;
 pub mod engines;
-pub mod packets;
+pub mod pkt_kit;
 pub mod utils;
 
 use std::env;
 use crate::engines::{NetworkMapper, PortScanner};
-use crate::utils::display_error_and_exit;
+use crate::utils::abort;
 
 
 
@@ -41,8 +41,8 @@ impl Command {
     fn validate_input(&mut self) {
         let input: Vec<String> = env::args().skip(1).collect();
         
-        if input.get(0).is_none() {
-            display_error_and_exit("No input found");
+        if input.is_empty() {
+            abort("No input found");
         }
 
         self.command   = input[0].clone();
@@ -53,16 +53,23 @@ impl Command {
 
     fn execute_function(&mut self) {
         match self.command.as_str() {
-            "pscan" => {
-                let mut scanner = PortScanner::new(self.arguments.clone(), false);
-                scanner.execute();
-            }
-            "netmap" => {
-                let mut mapper = NetworkMapper::new(self.arguments.clone());
-                mapper.execute();
-            }
-            _ => eprintln!("[ ERROR ] No command '{}'", self.command),
+            "pscan"  => self.execute_pscan(),
+            "netmap" => self.execute_netmap(),
+            _        => abort(format!("No command '{}'", self.command)),
         }
+    }
+
+
+
+    fn execute_netmap(&self) {
+        let mut mapper = NetworkMapper::new(self.arguments.clone());
+        mapper.execute();
+    }
+
+
+    fn execute_pscan(&self) {
+        let mut scanner = PortScanner::new(self.arguments.clone(), false);
+        scanner.execute();
     }
 
 }

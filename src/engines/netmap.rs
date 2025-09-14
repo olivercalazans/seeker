@@ -3,8 +3,8 @@ use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::NetMapArgs;
 use crate::engines::PortScanner;
-use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{display_progress, get_default_iface_info, get_host_name, DelayTimeGenerator};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::utils::{display_progress, default_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
 
@@ -80,7 +80,7 @@ impl NetworkMapper {
 
 
     fn get_ip_range() -> Ipv4AddrRange {
-        get_default_iface_info().hosts()
+        default_ipv4_net().hosts()
     }
 
 
@@ -150,7 +150,7 @@ impl NetworkMapper {
 
 
     fn display_header() {
-        println!("\n{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
+        println!("{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
         println!("{}", format!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8)));
     }
 
