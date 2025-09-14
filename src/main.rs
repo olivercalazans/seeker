@@ -4,6 +4,8 @@ pub mod pkt_kit;
 pub mod utils;
 
 use std::env;
+use clap::Parser;
+use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::{NetworkMapper, PortScanner};
 use crate::utils::abort;
 
@@ -62,13 +64,15 @@ impl Command {
 
 
     fn execute_netmap(&self) {
-        let mut mapper = NetworkMapper::new(self.arguments.clone());
+        let cmd_args   = NetMapArgs::parse_from(self.arguments.clone());
+        let mut mapper = NetworkMapper::new(cmd_args);
         mapper.execute();
     }
 
 
     fn execute_pscan(&self) {
-        let mut scanner = PortScanner::new(self.arguments.clone(), false);
+        let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
+        let mut scanner = PortScanner::new(cmd_args, false);
         scanner.execute();
     }
 
