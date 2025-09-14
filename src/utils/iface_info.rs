@@ -4,7 +4,7 @@ use netdev::interface::get_default_interface;
 
 
 
-pub fn get_default_iface_info() -> Ipv4Net {
+pub fn default_ipv4_net() -> Ipv4Net {
     let iface_info = get_default_interface()
         .expect("[ ERROR ] It wasn't possible to get the interface information");
 
@@ -13,14 +13,14 @@ pub fn get_default_iface_info() -> Ipv4Net {
 }
 
 
-pub fn get_default_iface_ip() -> Ipv4Addr {
-    let iface_info = get_default_iface_info();
+pub fn default_ipv4_addr() -> Ipv4Addr {
+    let iface_info = default_ipv4_net();
     iface_info.addr()
 }
 
 
-pub fn get_network() -> String {
-    let iface_info   = get_default_iface_info();
+pub fn default_iface_cidr() -> String {
+    let iface_info   = default_ipv4_net();
     let network_addr = iface_info.network();
     let cidr         = iface_info.prefix_len();
     format!("{}/{}", network_addr, cidr)

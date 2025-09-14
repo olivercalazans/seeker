@@ -1,10 +1,10 @@
 use std::{thread, time::Duration};
 use clap::Parser;
 use ipnet::Ipv4AddrRange;
-use crate::arg_parser::NetMapArgs;
+use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
-use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{display_progress, get_default_iface_info, get_host_name, DelayTimeGenerator};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::utils::{display_progress, default_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
 
@@ -17,9 +17,9 @@ pub struct NetworkMapper {
 
 impl NetworkMapper {
 
-    pub fn new(args_vec:Vec<String>) -> Self {
+    pub fn new(args:NetMapArgs) -> Self {
         Self {
-            args: NetMapArgs::parse_from(args_vec),
+            args,
             raw_packets: Vec::new(),
             active_ips: Vec::new(),
         }
@@ -80,7 +80,7 @@ impl NetworkMapper {
 
 
     fn get_ip_range() -> Ipv4AddrRange {
-        get_default_iface_info().hosts()
+        default_ipv4_net().hosts()
     }
 
 
@@ -127,7 +127,8 @@ impl NetworkMapper {
 
     fn scan_ports(ip: String) -> String {
         let args      = vec!["pscan".to_string(), ip];
-        let mut pscan = PortScanner::new(args, true);
+        let cmd_args  = PortScanArgs::parse_from(args);
+        let mut pscan = PortScanner::new(cmd_args, true);
         let ports_vec = pscan.execute();
         if ports_vec.is_empty() { return "None".to_string() }
         ports_vec.join(", ")
@@ -150,7 +151,7 @@ impl NetworkMapper {
 
 
     fn display_header() {
-        println!("\n{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
+        println!("{}", format!("\n{:<15}  {:<17}  {}", "IP Address", "MAC Address", "Hostname"));
         println!("{}", format!("{}  {}  {}", "-".repeat(15), "-".repeat(17), "-".repeat(8)));
     }
 

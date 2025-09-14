@@ -5,7 +5,7 @@ use pnet::packet::{
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
     tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
 };
-use crate::utils::get_default_iface_ip;
+use crate::utils::default_ipv4_addr;
 
 
 
@@ -17,7 +17,7 @@ pub struct PacketBuilder {
 impl PacketBuilder {
 
     pub fn new() -> Self {
-        Self { src_ip: get_default_iface_ip() }
+        Self { src_ip: default_ipv4_addr() }
     }
 
 

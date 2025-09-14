@@ -2,10 +2,10 @@ pub mod delay_generator;
 pub use delay_generator::DelayTimeGenerator;
 
 pub mod displays;
-pub use displays::{display_error_and_exit, display_progress};
+pub use displays::{abort, display_progress};
 
 pub mod iface_info;
-pub use iface_info::{get_default_iface_info, get_default_iface_ip, get_network};
+pub use iface_info::{default_ipv4_net, default_ipv4_addr, default_iface_cidr};
 
 pub mod network_info;
 pub use network_info::get_host_name;

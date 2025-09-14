@@ -1,5 +1,5 @@
 use rand::Rng;
-use crate::utils::display_error_and_exit;
+use crate::utils::abort;
 
 
 pub struct DelayTimeGenerator;
@@ -36,7 +36,7 @@ impl DelayTimeGenerator {
         let max              = Self::validate_number(&parts[1]);
 
         if min >= max || parts.len() > 2 {
-            display_error_and_exit(format!("Invalid range: {}", range_str));
+            abort(format!("Invalid range: {}", range_str));
         };
 
         let mut rng          = rand::thread_rng();
@@ -51,7 +51,7 @@ impl DelayTimeGenerator {
 
     fn validate_number(number_str: &str) -> f32 {        
         let number32: f32 = number_str.parse().unwrap_or_else(|_| {
-            display_error_and_exit(format!("Invalid number: {}", number_str));
+            abort(format!("Invalid number: {}", number_str));
         });
         number32
     }

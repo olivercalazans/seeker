@@ -1,7 +1,6 @@
 use std::{thread, time::Duration};
-use clap::Parser;
 use crate::arg_parser::PortScanArgs;
-use crate::packets::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
 use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGenerator};
 
 
@@ -16,13 +15,12 @@ pub struct PortScanner {
 
 impl PortScanner {
 
-    pub fn new(args_vec: Vec<String>, return_data: bool) -> Self {
+    pub fn new(args: PortScanArgs, return_data: bool) -> Self {
         Self {
-            args: PortScanArgs::parse_from(args_vec),
+            args,
             return_data,
             raw_packets: Vec::new(),
             open_ports: Vec::new(),
-
         }
     }
 

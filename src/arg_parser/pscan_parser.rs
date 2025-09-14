@@ -2,7 +2,6 @@ pub use std::net::Ipv4Addr;
 pub use clap::Parser;
 
 
-
 #[derive(Parser)]
 #[command(name = "pscan", about = "Port scanner")]
 pub struct PortScanArgs {

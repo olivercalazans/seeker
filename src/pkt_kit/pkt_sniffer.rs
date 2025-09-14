@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 use pcap::{Device, Capture};
-use crate::utils::{get_default_iface_ip, get_network};
+use crate::utils::{default_ipv4_addr, default_iface_cidr};
 
 
 
@@ -26,7 +26,7 @@ impl PacketSniffer {
             raw_packets: Arc::new(Mutex::new(Vec::new())),
             running: Arc::new(AtomicBool::new(false)),
             handle: None,
-            my_ip: get_default_iface_ip().to_string(),
+            my_ip: default_ipv4_addr().to_string(),
             cmd_filter: command,
             src_ip: target_ip,
         }
@@ -86,7 +86,7 @@ impl PacketSniffer {
 
     fn get_bpf_filter_parameters(&self) -> String {
         match self.cmd_filter.as_str() {
-            "netmap" => format!("tcp and dst host {} and src net {}", self.my_ip, get_network()),
+            "netmap" => format!("tcp and dst host {} and src net {}", self.my_ip, default_iface_cidr()),
             "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", self.my_ip, self.src_ip),
             _        => panic!("[ ERROR ] Unknown filter: {}", self.cmd_filter),
         }

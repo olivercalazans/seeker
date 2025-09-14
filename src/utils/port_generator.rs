@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 pub use rand::seq::SliceRandom;
-use crate::utils::display_error_and_exit;
+use crate::utils::abort;
 
 
 pub struct PortGenerator;
@@ -46,7 +46,7 @@ impl PortGenerator {
         let end: u16         = Self::validate_port(parts[1].to_string());
         
         if start >= end {
-            display_error_and_exit(format!("Invalid range format {}-{}", start, end));
+            abort(format!("Invalid range format {}-{}", start, end));
         }
 
         (start..=end).collect()
@@ -56,7 +56,7 @@ impl PortGenerator {
 
     fn validate_port(port_str: String) -> u16 {
         let port: u16 = port_str.parse().unwrap_or_else(|_| {
-            display_error_and_exit(format!("Invalid port: {}", port_str));
+            abort(format!("Invalid port: {}", port_str));
         });
 
         port
