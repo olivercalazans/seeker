@@ -48,7 +48,7 @@ impl NetworkMapper {
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
 
-        pkt_sniffer.start_sniffer();
+        pkt_sniffer.start_buffered_sniffer();
         (pkt_builder, pkt_sender, pkt_sniffer)
     }
 
@@ -126,7 +126,7 @@ impl NetworkMapper {
 
 
     fn scan_ports(ip: String) -> String {
-        let args      = vec!["pscan".to_string(), ip];
+        let args      = vec!["portsc".to_string(), ip];
         let cmd_args  = PortScanArgs::parse_from(args);
         let mut pscan = PortScanner::new(cmd_args, true);
         let ports_vec = pscan.execute();

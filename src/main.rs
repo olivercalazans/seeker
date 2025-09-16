@@ -5,8 +5,8 @@ pub mod utils;
 
 use std::env;
 use clap::Parser;
-use crate::arg_parser::{NetMapArgs, PortScanArgs};
-use crate::engines::{NetworkMapper, PortScanner};
+use crate::arg_parser::*;
+use crate::engines::*;
 use crate::utils::abort;
 
 
@@ -55,8 +55,9 @@ impl Command {
 
     fn execute_function(&mut self) {
         match self.command.as_str() {
-            "pscan"  => self.execute_pscan(),
             "netmap" => self.execute_netmap(),
+            "portsc" => self.execute_portsc(),
+            "watch"  => self.execute_netwatch(),
             _        => abort(format!("No command '{}'", self.command)),
         }
     }
@@ -70,10 +71,16 @@ impl Command {
     }
 
 
-    fn execute_pscan(&self) {
+    fn execute_portsc(&self) {
         let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
         let mut scanner = PortScanner::new(cmd_args, false);
         scanner.execute();
+    }
+
+
+    fn execute_netwatch(&self) {
+        let mut watcher = NetworkWatcher::new();
+        watcher.execute();
     }
 
 }

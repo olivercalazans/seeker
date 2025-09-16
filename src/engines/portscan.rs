@@ -49,7 +49,7 @@ impl PortScanner {
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("pscan".to_string(), self.args.target_ip.to_string());
 
-        pkt_sniffer.start_sniffer();
+        pkt_sniffer.start_buffered_sniffer();
         thread::sleep(Duration::from_secs_f32(0.5));
         
         (pkt_builder, pkt_sender, pkt_sniffer)
