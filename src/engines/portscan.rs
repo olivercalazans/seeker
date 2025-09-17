@@ -6,10 +6,10 @@ use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGene
 
 
 pub struct PortScanner {
-    args: PortScanArgs,
+    args:        PortScanArgs,
     return_data: bool,
     raw_packets: Vec<Vec<u8>>,
-    open_ports: Vec<String>,
+    open_ports:  Vec<String>,
 }
 
 
@@ -20,7 +20,7 @@ impl PortScanner {
             args,
             return_data,
             raw_packets: Vec::new(),
-            open_ports: Vec::new(),
+            open_ports:  Vec::new(),
         }
     }
 

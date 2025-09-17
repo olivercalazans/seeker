@@ -9,12 +9,12 @@ use crate::utils::{default_ipv4_addr, default_iface_cidr};
 
 
 pub struct PacketSniffer {
+    command:     String,
+    handle:      Option<thread::JoinHandle<()>>,
+    my_ip:       String,
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
-    running: Arc<AtomicBool>,
-    handle: Option<thread::JoinHandle<()>>,
-    my_ip: String,
-    src_ip: String,
-    command: String,
+    running:     Arc<AtomicBool>,
+    src_ip:      String,
 }
 
 
@@ -23,12 +23,12 @@ impl PacketSniffer {
 
     pub fn new(command: String, target_ip: String) -> Self {
         Self {
-            raw_packets: Arc::new(Mutex::new(Vec::new())),
-            running: Arc::new(AtomicBool::new(false)),
-            handle: None,
-            my_ip: default_ipv4_addr().to_string(),
-            src_ip: target_ip,
             command,
+            handle:      None,
+            my_ip:       default_ipv4_addr().to_string(),
+            raw_packets: Arc::new(Mutex::new(Vec::new())),
+            running:     Arc::new(AtomicBool::new(false)),
+            src_ip:      target_ip,
         }
     }
 

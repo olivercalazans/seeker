@@ -9,9 +9,9 @@ use crate::utils::{display_progress, default_ipv4_net, get_host_name, DelayTimeG
 
 
 pub struct NetworkMapper {
-    args: NetMapArgs,
+    args:        NetMapArgs,
     raw_packets: Vec<Vec<u8>>,
-    active_ips: Vec<Vec<String>>,
+    active_ips:  Vec<Vec<String>>,
 }
 
 
@@ -21,7 +21,7 @@ impl NetworkMapper {
         Self {
             args,
             raw_packets: Vec::new(),
-            active_ips: Vec::new(),
+            active_ips:  Vec::new(),
         }
     }
 
