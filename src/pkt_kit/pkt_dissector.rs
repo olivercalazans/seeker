@@ -11,27 +11,41 @@ impl PacketDissector {
             if let Some(etherparse::TransportSlice::Tcp(tcp)) = sliced.transport {
                 return tcp.source_port().to_string();
             }
-            return "unknown".to_string()
         }
         "unknown".to_string()
     }
 
     
 
-    pub fn get_src_ip(packet: &[u8]) -> String {
-        if let Ok(sliced) = SlicedPacket::from_ethernet(packet) {
-            if let Some(InternetSlice::Ipv4(ipv4)) = sliced.net {
-                let hdr = ipv4.header();
-                return format!(
-                    "{}.{}.{}.{}",
-                    hdr.source()[0], hdr.source()[1],
-                    hdr.source()[2], hdr.source()[3]
-                );
-            }
+    fn get_ipv4_header(packet: &[u8]) -> Option<Ipv4Header> {
+        let sliced = SlicedPacket::from_ethernet(packet).ok()?;
+        match sliced.net {
+            Some(InternetSlice::Ipv4(ipv4)) => Some(ipv4.header()),
+            _ => None,
         }
-        "unknown".to_string()
     }
 
+
+    
+    pub fn get_src_ip(packet: &[u8]) -> String {
+        if let Some(hdr) = get_ipv4_header(packet) {
+            let [a, b, c, d] = hdr.source();
+            format!("{}.{}.{}.{}", a, b, c, d)
+        } else {
+            "unknown".to_string()
+        }
+    }
+
+
+
+    pub fn get_dst_ip(packet: &[u8]) -> String {
+        if let Some(hdr) = get_ipv4_header(packet) {
+            let [a, b, c, d] = hdr.destination();
+            format!("{}.{}.{}.{}", a, b, c, d)
+        } else {
+            "unknown".to_string()
+        }
+    }
 
 
 

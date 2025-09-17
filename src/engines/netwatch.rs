@@ -1,23 +1,25 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::thread;
+use std::time::Duration;
+use crossbeam::channel::unbounded;
+
 
 
 pub struct NetworkWatcher {
-    hosts: HashMap<String, HostInfo>
     dns: HashMap<String, String>,
-}
-
-
-#[derive(Default)]
-pub struct HostInfo {
-    ports: HashSet<u16>,
-    sites: HashSet<String>,
+    hosts: HashMap<String, HashSet<String>>
+    raw_packets: VecDeque,
 }
 
 
 impl NetworkWatcher {
 
     pub fn new() -> Self {
-        Self { hosts: HashMap::new(), }
+        Self {
+            hosts: HashMap::new(),
+            dns: HashMap::new(),
+            raw_packets:VecDeque::new(),
+        }
     }
 
 
@@ -28,14 +30,8 @@ impl NetworkWatcher {
 
 
 
-    fn add_port(&mut self, ip: &str, port: u16) {
-        self.hosts.entry(ip.to_string()).or_default().ports.insert(port);
-    }
-
-
-
     fn add_site(&mut self, ip: &str, site: String) {
-        self.hosts.entry(ip.to_string()).or_default().sites.insert(site);
+        self.hosts.entryentry(ip.clone()).or_default().insert(site.clone());
     }
 
 }
