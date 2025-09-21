@@ -36,8 +36,8 @@ impl NetworkMapper {
 
 
     fn send_and_receive(&mut self) {
-        let (pkt_builder, mut pkt_sender, mut pkt_sniffer) = Self::setup_tools();
-        self.send_probes(&pkt_builder, &mut pkt_sender);
+        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = Self::setup_tools();
+        self.send_probes(&mut pkt_builder, &mut pkt_sender);
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
@@ -54,7 +54,7 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut PacketSender) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
