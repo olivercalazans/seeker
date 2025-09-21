@@ -126,7 +126,7 @@ impl NetworkMapper {
 
 
     fn scan_ports(ip: String) -> String {
-        let args      = vec!["portsc".to_string(), ip];
+        let args      = vec!["pscan".to_string(), ip];
         let cmd_args  = PortScanArgs::parse_from(args);
         let mut pscan = PortScanner::new(cmd_args, true);
         let ports_vec = pscan.execute();

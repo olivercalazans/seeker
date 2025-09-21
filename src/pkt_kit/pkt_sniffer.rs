@@ -11,7 +11,6 @@ use crate::utils::{default_ipv4_addr, default_iface_cidr};
 pub struct PacketSniffer {
     command:     String,
     handle:      Option<thread::JoinHandle<()>>,
-    my_ip:       String,
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
     running:     Arc<AtomicBool>,
     src_ip:      String,
@@ -25,7 +24,6 @@ impl PacketSniffer {
         Self {
             command,
             handle:      None,
-            my_ip:       default_ipv4_addr().to_string(),
             raw_packets: Arc::new(Mutex::new(Vec::new())),
             running:     Arc::new(AtomicBool::new(false)),
             src_ip:      target_ip,
@@ -90,9 +88,11 @@ impl PacketSniffer {
 
 
     fn get_bpf_filter_parameters(&self) -> String {
+        let my_ip = default_ipv4_addr().to_string();
+
         match self.command.as_str() {
-            "netmap" => format!("tcp and dst host {} and src net {}", self.my_ip, default_iface_cidr()),
-            "portsc" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", self.my_ip, self.src_ip),
+            "netmap" => format!("tcp and dst host {} and src net {}", my_ip, default_iface_cidr()),
+            "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
             _        => panic!("[ ERROR ] Unknown filter: {}", self.command),
         }
     }

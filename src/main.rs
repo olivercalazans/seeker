@@ -56,8 +56,7 @@ impl Command {
     fn execute_function(&mut self) {
         match self.command.as_str() {
             "netmap" => self.execute_netmap(),
-            "portsc" => self.execute_portsc(),
-            "watch"  => self.execute_netwatch(),
+            "pscan"  => self.execute_portsc(),
             _        => abort(format!("No command '{}'", self.command)),
         }
     }
@@ -75,12 +74,6 @@ impl Command {
         let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
         let mut scanner = PortScanner::new(cmd_args, false);
         scanner.execute();
-    }
-
-
-    fn execute_netwatch(&self) {
-        let mut watcher = NetworkWatcher::new();
-        watcher.execute();
     }
 
 }
