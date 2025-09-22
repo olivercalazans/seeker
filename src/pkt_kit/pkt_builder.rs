@@ -1,5 +1,5 @@
 use std::net::Ipv4Addr;
-use rand::Rng;
+use rand::{Rng, rngs::ThreadRng};
 use pnet::packet::{
     ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
@@ -10,25 +10,30 @@ use crate::utils::default_ipv4_addr;
 
 
 pub struct PacketBuilder {
+    buffer: [u8; 40],
     src_ip: Ipv4Addr,
+    rng:    ThreadRng,
 }
 
 
 impl PacketBuilder {
 
     pub fn new() -> Self {
-        Self { src_ip: default_ipv4_addr() }
+        Self {
+            buffer: [0u8; 40],
+            src_ip: default_ipv4_addr(),
+            rng:    rand::thread_rng(),
+        }
     }
 
 
-    pub fn build_tcp_packet(&self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
-        let mut buffer = [0u8; 40];
-        let mut rng    = rand::thread_rng();
-        let src_port   = rng.gen_range(10000..=65535);
 
-        self.add_ip_layer(&mut buffer, dst_ip, IpNextHeaderProtocols::Tcp);
+    pub fn build_tcp_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
+        let src_port = self.rng.gen_range(10000..=65535);
+
+        self.add_ip_layer(dst_ip, IpNextHeaderProtocols::Tcp);
         
-        let mut tcp_header = MutableTcpPacket::new(&mut buffer[20..]).unwrap();
+        let mut tcp_header = MutableTcpPacket::new(&mut self.buffer[20..]).unwrap();
         tcp_header.set_source(src_port);
         tcp_header.set_destination(dst_port);
         tcp_header.set_sequence(1);
@@ -39,13 +44,13 @@ impl PacketBuilder {
         let pseudo_header_sum = tcp_checksum(&tcp_header.to_immutable(), &self.src_ip, &dst_ip);
         tcp_header.set_checksum(pseudo_header_sum);
         
-        buffer
+        self.buffer
     }
 
 
 
-    fn add_ip_layer(&self, buffer: &mut [u8], dst_ip:Ipv4Addr, protocol: IpNextHeaderProtocol) {
-        let mut ip_header = MutableIpv4Packet::new(&mut buffer[..20]).unwrap();
+    fn add_ip_layer(&mut self, dst_ip:Ipv4Addr, protocol: IpNextHeaderProtocol) {
+        let mut ip_header = MutableIpv4Packet::new(&mut self.buffer[..20]).unwrap();
         ip_header.set_version(4);
         ip_header.set_header_length(5);
         ip_header.set_total_length(40);

@@ -6,10 +6,10 @@ use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGene
 
 
 pub struct PortScanner {
-    args: PortScanArgs,
+    args:        PortScanArgs,
     return_data: bool,
     raw_packets: Vec<Vec<u8>>,
-    open_ports: Vec<String>,
+    open_ports:  Vec<String>,
 }
 
 
@@ -20,7 +20,7 @@ impl PortScanner {
             args,
             return_data,
             raw_packets: Vec::new(),
-            open_ports: Vec::new(),
+            open_ports:  Vec::new(),
         }
     }
 
@@ -37,8 +37,8 @@ impl PortScanner {
 
 
     fn send_and_receive(&mut self) {
-        let (pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
-        self.send_probes(&pkt_builder, &mut pkt_sender);
+        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
+        self.send_probes(&mut pkt_builder, &mut pkt_sender);
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
@@ -49,7 +49,7 @@ impl PortScanner {
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("pscan".to_string(), self.args.target_ip.to_string());
 
-        pkt_sniffer.start_sniffer();
+        pkt_sniffer.start_buffered_sniffer();
         thread::sleep(Duration::from_secs_f32(0.5));
         
         (pkt_builder, pkt_sender, pkt_sniffer)
@@ -57,7 +57,7 @@ impl PortScanner {
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut PacketSender) {
         let (ip, ports, delays) = self.get_data_for_loop();
 
         for (port, delay) in ports.iter().zip(delays.iter())  {

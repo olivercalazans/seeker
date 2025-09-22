@@ -7,8 +7,8 @@ pub use displays::{abort, display_progress};
 pub mod iface_info;
 pub use iface_info::{default_ipv4_net, default_ipv4_addr, default_iface_cidr};
 
-pub mod network_info;
-pub use network_info::get_host_name;
+pub mod dns;
+pub use dns::get_host_name;
 
 pub mod port_generator;
 pub use port_generator::PortGenerator;

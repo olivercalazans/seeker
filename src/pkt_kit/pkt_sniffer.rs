@@ -9,12 +9,11 @@ use crate::utils::{default_ipv4_addr, default_iface_cidr};
 
 
 pub struct PacketSniffer {
+    command:     String,
+    handle:      Option<thread::JoinHandle<()>>,
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
-    running: Arc<AtomicBool>,
-    handle: Option<thread::JoinHandle<()>>,
-    my_ip: String,
-    cmd_filter: String,
-    src_ip: String
+    running:     Arc<AtomicBool>,
+    src_ip:      String,
 }
 
 
@@ -23,33 +22,37 @@ impl PacketSniffer {
 
     pub fn new(command: String, target_ip: String) -> Self {
         Self {
+            command,
+            handle:      None,
             raw_packets: Arc::new(Mutex::new(Vec::new())),
-            running: Arc::new(AtomicBool::new(false)),
-            handle: None,
-            my_ip: default_ipv4_addr().to_string(),
-            cmd_filter: command,
-            src_ip: target_ip,
+            running:     Arc::new(AtomicBool::new(false)),
+            src_ip:      target_ip,
         }
     }
 
 
 
-    pub fn start_sniffer(&mut self) {
+    pub fn start_buffered_sniffer(&mut self) {
         self.running.store(true, Ordering::Relaxed);
-        let packets = Arc::clone(&self.raw_packets);
         let running = Arc::clone(&self.running);
-        let mut cap = self.create_sniffer();
+        let packets = Arc::clone(&self.raw_packets);
+        let cap     = self.create_sniffer();
 
-        let handle = thread::spawn(move || {
-            while running.load(Ordering::Relaxed) {
-                if let Ok(packet) = cap.next_packet() {
-                    let data = packet.data.to_vec();
-                    packets.lock().unwrap().push(data);
+        self.handle = Some(thread::spawn(move || {
+            Self::capture_loop(cap, running, packets)
+        }));
+    }
+
+
+
+    fn capture_loop(mut cap: Capture<pcap::Active>, running: Arc<AtomicBool>, packets: Arc<Mutex<Vec<Vec<u8>>>>) {
+        while running.load(Ordering::Relaxed) {
+            if let Ok(pkt) = cap.next_packet() {
+                if let Ok(mut v) = packets.lock() {
+                    v.push(pkt.data.to_vec());
                 }
             }
-        });
-
-        self.handle = Some(handle);
+        }
     }
 
 
@@ -68,7 +71,7 @@ impl PacketSniffer {
 
     fn get_default_iface() -> Device {
         Device::lookup()
-            .expect("Não conseguiu achar interface padrão")
+            .expect("No default interface")
             .unwrap()
     }
 
@@ -85,10 +88,12 @@ impl PacketSniffer {
 
 
     fn get_bpf_filter_parameters(&self) -> String {
-        match self.cmd_filter.as_str() {
-            "netmap" => format!("tcp and dst host {} and src net {}", self.my_ip, default_iface_cidr()),
-            "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", self.my_ip, self.src_ip),
-            _        => panic!("[ ERROR ] Unknown filter: {}", self.cmd_filter),
+        let my_ip = default_ipv4_addr().to_string();
+
+        match self.command.as_str() {
+            "netmap" => format!("tcp and dst host {} and src net {}", my_ip, default_iface_cidr()),
+            "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
+            _        => panic!("[ ERROR ] Unknown filter: {}", self.command),
         }
     }
 

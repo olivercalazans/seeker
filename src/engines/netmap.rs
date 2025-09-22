@@ -9,9 +9,9 @@ use crate::utils::{display_progress, default_ipv4_net, get_host_name, DelayTimeG
 
 
 pub struct NetworkMapper {
-    args: NetMapArgs,
+    args:        NetMapArgs,
     raw_packets: Vec<Vec<u8>>,
-    active_ips: Vec<Vec<String>>,
+    active_ips:  Vec<Vec<String>>,
 }
 
 
@@ -21,7 +21,7 @@ impl NetworkMapper {
         Self {
             args,
             raw_packets: Vec::new(),
-            active_ips: Vec::new(),
+            active_ips:  Vec::new(),
         }
     }
 
@@ -36,8 +36,8 @@ impl NetworkMapper {
 
 
     fn send_and_receive(&mut self) {
-        let (pkt_builder, mut pkt_sender, mut pkt_sniffer) = Self::setup_tools();
-        self.send_probes(&pkt_builder, &mut pkt_sender);
+        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = Self::setup_tools();
+        self.send_probes(&mut pkt_builder, &mut pkt_sender);
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
@@ -48,13 +48,13 @@ impl NetworkMapper {
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
 
-        pkt_sniffer.start_sniffer();
+        pkt_sniffer.start_buffered_sniffer();
         (pkt_builder, pkt_sender, pkt_sniffer)
     }
 
 
 
-    fn send_probes(&self, pkt_builder: &PacketBuilder, pkt_sender: &mut PacketSender) {
+    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut PacketSender) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
