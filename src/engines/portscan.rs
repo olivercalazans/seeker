@@ -29,7 +29,11 @@ impl PortScanner {
     pub fn execute(&mut self) -> Vec<String> {
         self.send_and_receive();
         self.process_raw_packets();
-        if self.return_data { return self.open_ports.clone() }
+        
+        if self.return_data {
+            return self.open_ports.clone()
+        }
+        
         self.display_result();
         Vec::new()
     }
