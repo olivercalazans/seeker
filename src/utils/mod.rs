@@ -5,7 +5,7 @@ pub mod displays;
 pub use displays::{abort, display_progress};
 
 pub mod iface_info;
-pub use iface_info::{default_ipv4_net, default_ipv4_addr, default_iface_cidr};
+pub use iface_info::*;
 
 pub mod dns;
 pub use dns::get_host_name;
