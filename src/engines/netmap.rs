@@ -44,7 +44,7 @@ impl NetworkMapper {
 
 
     fn setup_tools() -> (PacketBuilder, PacketSender, PacketSniffer) {
-        let pkt_builder     = PacketBuilder::new("layer2".to_string());
+        let pkt_builder     = PacketBuilder::new();
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
 

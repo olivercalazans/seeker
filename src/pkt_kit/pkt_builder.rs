@@ -29,7 +29,7 @@ pub struct PacketBuilder {
 
 impl PacketBuilder {
 
-    pub fn new(layer: String) -> Self {
+    pub fn new() -> Self {
         Self {
             buffers: PacketBuffer::default(),
             src_ip:  default_ipv4_addr(),
@@ -87,7 +87,7 @@ impl PacketBuilder {
         let mut ip_header = MutableIpv4Packet::new(&mut self.buffers.ip).unwrap();
         ip_header.set_version(4);
         ip_header.set_header_length(5);
-        ip_header.set_total_length(54);
+        ip_header.set_total_length(40);
         ip_header.set_ttl(64);
         ip_header.set_next_level_protocol(protocol);
         ip_header.set_source(self.src_ip);
