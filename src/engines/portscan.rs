@@ -49,7 +49,7 @@ impl PortScanner {
 
 
     fn setup_tools(&self) -> (PacketBuilder, PacketSender, PacketSniffer) {
-        let pkt_builder     = PacketBuilder::new();
+        let pkt_builder     = PacketBuilder::new("layer2".to_string());
         let pkt_sender      = PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("pscan".to_string(), self.args.target_ip.to_string());
 

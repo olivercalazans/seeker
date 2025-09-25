@@ -2,7 +2,7 @@ use std::net::Ipv4Addr;
 use ipnet::Ipv4Net;
 use rand::{Rng, rngs::ThreadRng};
 use crate::pkt_kit::{PacketBuilder, PacketSender};
-use crate::utils::{default_ipv4_net, default_iface_mac};
+use crate::utils::{default_ipv4_net};
 
 
 

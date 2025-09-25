@@ -4,12 +4,12 @@ use pnet::{
     packet::{ip::IpNextHeaderProtocols, ipv4::MutableIpv4Packet},
     transport::{transport_channel, TransportChannelType::Layer3, TransportSender},
 };
-use crate::utils::get_iface_name;
+use crate::utils::default_iface_name;
 
 
 
 pub struct PacketSender {
-    layer2_socket:     DataLinkSender,
+    layer2_socket:     Box<dyn DataLinkSender>,
     layer3_tcp_socket: TransportSender,
 }
 
@@ -25,8 +25,8 @@ impl PacketSender {
 
 
 
-    fn create_layer2_sender() -> DataLinkSender {
-        let iface_name = get_iface_name();
+    fn create_layer2_sender() -> Box<dyn DataLinkSender> {
+        let iface_name = default_iface_name();
         
         let interface  = datalink::interfaces()
             .into_iter()
