@@ -32,7 +32,13 @@ impl PacketBuilder {
 
 
 
-    pub fn build_tcp_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
+    pub fn build_tcp_ether_packet(&mut self, dst_ip: Ipv4Addr) -> [u8; 40] {
+
+    }
+
+
+
+    pub fn build_tcp_ip_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> [u8; 40] {
         self.add_ip_header(dst_ip, IpNextHeaderProtocols::Tcp);
         self.add_tcp_header(dst_ip, dst_port);
         self.buffer
@@ -88,6 +94,5 @@ impl PacketBuilder {
         bytes[0] = (bytes[0] | 0x02) & 0xFE;
         MacAddr::new(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5])
     }
-
 
 }

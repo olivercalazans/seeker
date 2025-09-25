@@ -6,6 +6,14 @@ use crate::utils::abort;
 
 
 
+pub fn default_iface_name() -> String {
+    let iface_info = get_default_interface()
+        .expect("[ERROR] It wasn't possible to get the interface information");
+
+    iface_info.name
+}
+
+
 pub fn default_ipv4_net() -> Ipv4Net {
     let iface_info = get_default_interface()
         .expect("[ ERROR ] It wasn't possible to get the interface information");

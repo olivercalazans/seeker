@@ -58,8 +58,8 @@ impl NetworkMapper {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
-            let tcp_packet = pkt_builder.build_tcp_packet(ip, 80);
-            pkt_sender.send_tcp(tcp_packet, ip);
+            let tcp_packet = pkt_builder.build_tcp_ip_packet(ip, 80);
+            pkt_sender.send_layer3_tcp(tcp_packet, ip);
             
             let msg = format!("Packets sent: {}/{} - {:<15} - delay: {:.2}", i+1, total, ip.to_string(), delay);
             display_progress(msg);
