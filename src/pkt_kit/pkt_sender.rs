@@ -53,7 +53,7 @@ impl PacketSender {
 
 
 
-    pub fn send_layer3_tcp(&mut self, packet: [u8; 40], dst_ip: Ipv4Addr) {
+    pub fn send_layer3_tcp(&mut self, packet: &[u8], dst_ip: Ipv4Addr) {
         self.layer3_tcp_socket.send_to(
             MutableIpv4Packet::owned(packet.to_vec()).unwrap(),
             std::net::IpAddr::V4(dst_ip)
