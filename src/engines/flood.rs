@@ -39,10 +39,21 @@ impl PacketFlood {
 
 
 
+    fn setup_tools() -> (PacketBuilder, PacketSender) {
+        let pkt_builder = PacketBuilder::new();
+        let pkt_sender  = PacketSender::new();
+        (pkt_builder, pkt_sender)
+    }
+
+
+
     fn send_endlessly(&mut self) {
+        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
+
         while true {
-            let ip = self.get_random_ip();
-            println!("{}", ip);
+            let ip  = self.get_random_ip();
+            let pkt = pkt_builder.build_tcp_ether_packet(ip);
+            pkt_sender.send_layer2_frame(pkt);
         }
     }
 

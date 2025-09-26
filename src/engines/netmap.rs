@@ -4,7 +4,7 @@ use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{display_progress, default_ipv4_net, get_host_name, DelayTimeGenerator};
+use crate::utils::{inline_display, default_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
 
@@ -61,8 +61,7 @@ impl NetworkMapper {
             let tcp_packet = pkt_builder.build_tcp_ip_packet(ip, 80);
             pkt_sender.send_layer3_tcp(tcp_packet, ip);
             
-            let msg = format!("Packets sent: {}/{} - {:<15} - delay: {:.2}", i+1, total, ip.to_string(), delay);
-            display_progress(msg);
+            Self::display_progress(i+1, total, ip.to_string(), *delay);
             thread::sleep(Duration::from_secs_f32(*delay));
         }
         println!("");
@@ -81,6 +80,13 @@ impl NetworkMapper {
 
     fn get_ip_range() -> Ipv4AddrRange {
         default_ipv4_net().hosts()
+    }
+
+
+
+    fn display_progress(i: usize, total: usize, ip: String, delay: f32) {
+        let msg = format!("Packets sent: {}/{} - {:<15} - delay: {:.2}", i, total, ip, delay);
+        inline_display(msg);
     }
 
 

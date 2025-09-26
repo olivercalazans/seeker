@@ -53,6 +53,14 @@ impl PacketSender {
 
 
 
+    pub fn send_layer2_frame(&mut self, packet: &[u8]) {
+        self.layer2_socket.send_to(packet, None)
+            .expect("Failed to send frame via datalink");
+    }
+
+
+
+
     pub fn send_layer3_tcp(&mut self, packet: &[u8], dst_ip: Ipv4Addr) {
         self.layer3_tcp_socket.send_to(
             MutableIpv4Packet::owned(packet.to_vec()).unwrap(),

@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 use crate::arg_parser::PortScanArgs;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
-use crate::utils::{PortGenerator, display_progress, get_host_name, DelayTimeGenerator};
+use crate::utils::{PortGenerator, inline_display, get_host_name, DelayTimeGenerator};
 
 
 
@@ -68,7 +68,7 @@ impl PortScanner {
             let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, *port);
             pkt_sender.send_layer3_tcp(tcp_packet, self.args.target_ip);
             
-            display_progress(format!("Packet sent to {} port {:<5} - delay: {:.2}", ip, port, delay));
+            Self::display_progress(ip.clone(), *port, *delay);
             thread::sleep(Duration::from_secs_f32(*delay));
         }
         println!("");
@@ -81,6 +81,13 @@ impl PortScanner {
         let ports  = PortGenerator::get_ports(self.args.ports.clone(), self.args.random.clone());
         let delays = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), ports.len());
         (ip, ports, delays)
+    }
+
+
+
+    fn display_progress(ip: String, port: u16, delay: f32) {
+        let msg = format!("Packet sent to {} port {:<5} - delay: {:.2}", ip, port, delay);
+        inline_display(msg);
     }
 
 
