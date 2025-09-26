@@ -4,15 +4,11 @@
 
 <br>
 
-
-
-<div align="center">
-  <img src="https://img.shields.io/badge/port_scanning-grey?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/network_mapping-grey?style=for-the-badge" />
-</div>
+- **Network Mapping**
+- **Port Scanning**
+- **Packet Flooding**
 
 <br>
-
 
 
 ## Dependencies
