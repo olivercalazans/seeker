@@ -55,12 +55,18 @@ impl Command {
 
     fn execute_function(&mut self) {
         match self.command.as_str() {
+            "flood"  => self.execute_flood(),
             "netmap" => self.execute_netmap(),
             "pscan"  => self.execute_portsc(),
             _        => abort(format!("No command '{}'", self.command)),
         }
     }
 
+
+    fn execute_flood(&self) {
+        let mut flood = PacketFlood::new();
+        flood.execute();
+    }
 
 
     fn execute_netmap(&self) {
