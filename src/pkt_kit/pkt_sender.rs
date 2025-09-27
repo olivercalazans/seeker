@@ -54,8 +54,8 @@ impl PacketSender {
 
 
     pub fn send_layer2_frame(&mut self, packet: &[u8]) {
-        self.layer2_socket.send_to(packet, None)
-            .expect("Failed to send frame via datalink");
+        let _ = self.layer2_socket.send_to(packet, None)
+                    .expect("Failed to send frame via datalink");
     }
 
 

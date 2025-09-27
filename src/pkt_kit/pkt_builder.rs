@@ -6,22 +6,11 @@ use pnet::packet::{
     ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
     tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
+    udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
 };
+use crate::pkt_kit::{HeaderBuffer, PacketBuffer};
 use crate::utils::{default_ipv4_addr, default_iface_mac};
 
-
-
-#[derive(Default)]
-struct HeaderBuffer {
-    tcp:   [u8; 20],
-    ip:    [u8; 20],
-    ether: [u8; 14],
-}
-
-struct PacketBuffer {
-    tcp_layer2: [u8; 54],
-    tcp_layer3: [u8; 40],
-}
 
 
 pub struct PacketBuilder {
@@ -38,7 +27,7 @@ impl PacketBuilder {
     pub fn new() -> Self {
         Self {
             headers: HeaderBuffer::default(),
-            packets: PacketBuffer { tcp_layer2: [0;54], tcp_layer3: [0;40] },
+            packets: PacketBuffer::default(),
             src_ip:  default_ipv4_addr(),
             src_mac: default_iface_mac(),
             rng:     rand::thread_rng(),
@@ -71,6 +60,17 @@ impl PacketBuilder {
 
 
 
+    pub fn build_udp_ip_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
+        self.add_ip_header(dst_ip, IpNextHeaderProtocols::Udp);
+        self.add_udp_header(dst_ip, dst_port);
+
+        self.packets.udp_layer3[..20].copy_from_slice(&self.headers.ip);
+        self.packets.udp_layer3[20..].copy_from_slice(&self.headers.udp);
+        &self.packets.udp_layer3
+    }
+
+
+
     fn add_tcp_header(&mut self, dst_ip: Ipv4Addr, dst_port: u16) {
         let src_port = self.rng.gen_range(10000..=65535);
         
@@ -84,6 +84,20 @@ impl PacketBuilder {
 
         let pseudo_header_sum = tcp_checksum(&tcp_header.to_immutable(), &self.src_ip, &dst_ip);
         tcp_header.set_checksum(pseudo_header_sum);
+    }
+
+
+
+    fn add_udp_header(&mut self, dst_ip: Ipv4Addr, dst_port: u16) {
+        let src_port = self.rng.gen_range(10000..=65535);
+
+        let mut udp_header = MutableUdpPacket::new(&mut self.headers.udp).unwrap();
+        udp_header.set_source(src_port);
+        udp_header.set_destination(dst_port);
+        udp_header.set_length(8u16);
+
+        let checksum = udp_checksum(&udp_header.to_immutable(), &self.src_ip, &dst_ip);
+        udp_header.set_checksum(checksum);
     }
 
 
