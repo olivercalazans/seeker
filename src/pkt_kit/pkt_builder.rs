@@ -60,10 +60,10 @@ impl PacketBuilder {
 
 
 
-    pub fn build_udp_ether_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
+    pub fn build_udp_ether_packet(&mut self, dst_ip: Ipv4Addr) -> &[u8] {
         self.add_ether_header();
         self.add_ip_header(28, IpNextHeaderProtocols::Udp, dst_ip);
-        self.add_udp_header(dst_ip, dst_port);
+        self.add_udp_header(dst_ip, 53);
 
         self.packets.udp_layer2[..14].copy_from_slice(&self.headers.ether);
         self.packets.udp_layer2[14..34].copy_from_slice(&self.headers.ip);

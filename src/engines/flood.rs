@@ -53,9 +53,14 @@ impl PacketFlood {
         let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
 
         while true {
-            let ip  = self.get_random_ip();
-            let pkt = pkt_builder.build_tcp_ether_packet(ip);
-            pkt_sender.send_layer2_frame(pkt);
+            let ip = self.get_random_ip();
+            
+            let tcp_pkt = pkt_builder.build_tcp_ether_packet(ip);
+            pkt_sender.send_layer2_frame(tcp_pkt);
+
+            let udp_pkt = pkt_builder.build_udp_ether_packet(ip);
+            pkt_sender.send_layer2_frame(udp_pkt);
+            
             self.display_progress();
         }
 
@@ -64,7 +69,7 @@ impl PacketFlood {
 
     
     fn display_progress(&mut self) {
-        self.pkts_sent += 1;
+        self.pkts_sent += 2;
         let msg: String = format!("Packets sent: {}", &self.pkts_sent);
         inline_display(msg);
     }
