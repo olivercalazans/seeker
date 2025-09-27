@@ -1,14 +1,15 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::pkt_kit::{PacketBuilder, PacketSender};
-use crate::utils::{default_ipv4_net};
+use crate::utils::{default_ipv4_net, inline_display};
 
 
 
 pub struct PacketFlood {
-    start: u32,
-    end:   u32,
-    rng:   ThreadRng,
+    start:     u32,
+    end:       u32,
+    pkts_sent: usize,
+    rng:       ThreadRng,
 }
 
 
@@ -16,9 +17,10 @@ impl PacketFlood {
 
     pub fn new() -> Self {
         Self {
-            start: 0,
-            end:   0,
-            rng:   rand::thread_rng(),
+            start:     0,
+            end:       0,
+            pkts_sent: 0,
+            rng:       rand::thread_rng(),
         }
     }
 
@@ -54,9 +56,18 @@ impl PacketFlood {
             let ip  = self.get_random_ip();
             let pkt = pkt_builder.build_tcp_ether_packet(ip);
             pkt_sender.send_layer2_frame(pkt);
+            self.display_progress();
         }
+
+        println!("");
     }
 
+    
+    fn display_progress(&mut self) {
+        self.pkts_sent += 1;
+        let msg: String = format!("Packets sent: {}", &self.pkts_sent);
+        inline_display(msg);
+    }
 
 
     fn get_random_ip(&mut self) -> Ipv4Addr {
