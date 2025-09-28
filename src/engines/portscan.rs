@@ -60,7 +60,7 @@ impl PortScanner {
     fn setup_tools(&self) -> (PacketBuilder, PacketSender, PacketSniffer) {
         let pkt_builder     = PacketBuilder::new();
         let pkt_sender      = PacketSender::new();
-        let mut pkt_sniffer = PacketSniffer::new(self.filter_key(), self.args.target_ip.to_string());
+        let mut pkt_sniffer = PacketSniffer::new(self.filter(), self.args.target_ip.to_string());
 
         pkt_sniffer.start_buffered_sniffer();
         thread::sleep(Duration::from_secs_f32(0.5));
@@ -70,11 +70,7 @@ impl PortScanner {
 
 
 
-    fn filter_key(&self) -> String {
-        if self.args.udp {
-            return "pscan-udp".to_string()
-        }
-
+    fn filter(&self) -> String {
         "pscan-tcp".to_string()
     }
 
@@ -85,15 +81,8 @@ impl PortScanner {
 
         for (port, delay) in self.ports.iter().zip(delays.iter())  {
 
-            if !self.args.udp {
-                let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, *port);
-                pkt_sender.send_layer3_tcp(tcp_packet, self.args.target_ip);
-            }
-
-            if self.args.udp {
-                let udp_packet = pkt_builder.build_udp_ip_packet(self.args.target_ip, *port);
-                pkt_sender.send_layer3_udp(udp_packet, self.args.target_ip);
-            }
+            let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, *port);
+            pkt_sender.send_layer3_tcp(tcp_packet, self.args.target_ip);
 
             Self::display_progress(ip.clone(), *port, *delay);
             thread::sleep(Duration::from_secs_f32(*delay));
@@ -127,11 +116,7 @@ impl PortScanner {
 
 
     fn process_raw_packets(&mut self) {
-        if self.args.udp {
-            self.process_udp_packets();
-        } else {
-            self.process_tcp_packets();
-        }
+        self.process_tcp_packets();
     }
 
 
@@ -141,32 +126,6 @@ impl PortScanner {
             let port = PacketDissector::get_tcp_src_port(packet);
             self.open_ports.push(port);
         }
-    }
-
-
-
-    fn process_udp_packets(&mut self) {
-        let mut closed_ports: Vec<u16> = Vec::new();
-
-        for packet in &self.raw_packets {
-            let port = PacketDissector::extract_udp_dst_port_from_icmp(packet);
-            if let Some(p) = port{
-                closed_ports.push(p);
-            }
-        }
-
-        self.remove_closed(&closed_ports);
-    }
-
-
-
-    fn remove_closed(&mut self, closed_ports: &[u16]) {
-        self.open_ports = self.ports
-            .iter()
-            .copied()
-            .filter(|port| !closed_ports.contains(port))
-            .map(|port| port.to_string())
-            .collect();
     }
 
 

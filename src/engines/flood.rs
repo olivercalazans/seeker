@@ -52,7 +52,7 @@ impl PacketFlood {
     fn send_endlessly(&mut self) {
         let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
 
-        while true {
+        loop {
             let ip = self.get_random_ip();
             
             let tcp_pkt = pkt_builder.build_tcp_ether_packet(ip);
@@ -63,8 +63,6 @@ impl PacketFlood {
             
             self.display_progress();
         }
-
-        println!("");
     }
 
     
