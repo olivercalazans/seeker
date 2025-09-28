@@ -91,9 +91,10 @@ impl PacketSniffer {
         let my_ip = default_ipv4_addr().to_string();
 
         match self.command.as_str() {
-            "netmap" => format!("tcp and dst host {} and src net {}", my_ip, default_iface_cidr()),
-            "pscan"  => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
-            _        => panic!("[ ERROR ] Unknown filter: {}", self.command),
+            "netmap"    => format!("tcp and dst host {} and src net {}", my_ip, default_iface_cidr()),
+            "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
+            "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
+            _           => panic!("[ ERROR ] Unknown filter: {}", self.command),
         }
     }
 

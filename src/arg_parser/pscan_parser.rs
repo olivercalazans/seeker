@@ -28,4 +28,9 @@ pub struct PortScanArgs {
     #[arg(short, long)]
     pub delay: Option<String>,
 
+    
+    /// Scan UDP ports
+    #[arg(short = 'U', long = "UDP")]
+    pub udp: bool,
+
 }
