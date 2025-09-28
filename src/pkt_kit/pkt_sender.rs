@@ -11,6 +11,7 @@ use crate::utils::default_iface_name;
 pub struct PacketSender {
     layer2_socket:     Box<dyn DataLinkSender>,
     layer3_tcp_socket: TransportSender,
+    layer3_udp_socket: TransportSender,
 }
 
 
@@ -20,6 +21,7 @@ impl PacketSender {
         Self {
             layer2_socket:     Self::create_layer2_sender(),
             layer3_tcp_socket: Self::create_layer3_tcp_socket(),
+            layer3_udp_socket: Self::create_layer3_udp_socket()
         }
     }
 
@@ -53,16 +55,33 @@ impl PacketSender {
 
 
 
-    pub fn send_layer2_frame(&mut self, packet: &[u8]) {
-        self.layer2_socket.send_to(packet, None)
-            .expect("Failed to send frame via datalink");
+    fn create_layer3_udp_socket() -> TransportSender {
+        let (udp_sender, _) = transport_channel(4096, Layer3(IpNextHeaderProtocols::Udp))
+            .expect("[ERROR] Could not create UDP transport channel");
+
+        udp_sender
     }
 
+
+
+    pub fn send_layer2_frame(&mut self, packet: &[u8]) {
+        let _ = self.layer2_socket.send_to(packet, None)
+                    .expect("Failed to send frame via datalink");
+    }
 
 
 
     pub fn send_layer3_tcp(&mut self, packet: &[u8], dst_ip: Ipv4Addr) {
         self.layer3_tcp_socket.send_to(
+            MutableIpv4Packet::owned(packet.to_vec()).unwrap(),
+            std::net::IpAddr::V4(dst_ip)
+        ).unwrap();
+    }
+
+
+
+    pub fn send_layer3_udp(&mut self, packet: &[u8], dst_ip: Ipv4Addr) {
+        self.layer3_udp_socket.send_to(
             MutableIpv4Packet::owned(packet.to_vec()).unwrap(),
             std::net::IpAddr::V4(dst_ip)
         ).unwrap();

@@ -10,7 +10,7 @@ impl PacketDissector {
 
 
 
-    pub fn get_src_port(packet: &[u8]) -> String {
+    pub fn get_tcp_src_port(packet: &[u8]) -> String {
         Self::get_headers(packet)
             .and_then(|sliced| match sliced.transport {
                 Some(etherparse::TransportSlice::Tcp(tcp)) => Some(tcp.source_port().to_string()),

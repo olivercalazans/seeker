@@ -8,7 +8,7 @@ impl DelayTimeGenerator {
 
     pub fn get_delay_list(delay_arg: Option<String>, quantity: usize) -> Vec<f32> {
         if delay_arg.is_none() {
-            return Self::fixed_delay_range("0.02".to_string(), quantity)
+            return Self::fixed_delay_range("0.04".to_string(), quantity)
         }
 
         let delay_str = delay_arg.unwrap();
