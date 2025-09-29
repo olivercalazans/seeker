@@ -1,11 +1,13 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
+use crate::arg_parser::FloodArgs;
 use crate::pkt_kit::{PacketBuilder, PacketSender};
 use crate::utils::{default_ipv4_net, inline_display};
 
 
 
 pub struct PacketFlood {
+    args:      FloodArgs,
     start:     u32,
     end:       u32,
     pkts_sent: usize,
@@ -15,8 +17,9 @@ pub struct PacketFlood {
 
 impl PacketFlood {
 
-    pub fn new() -> Self {
+    pub fn new(args: FloodArgs) -> Self {
         Self {
+            args,
             start:     0,
             end:       0,
             pkts_sent: 0,
