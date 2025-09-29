@@ -9,7 +9,7 @@ use pnet::packet::{
     udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
 };
 use crate::pkt_kit::{HeaderBuffer, PacketBuffer};
-use crate::utils::{default_ipv4_addr, default_iface_mac};
+use crate::utils::{default_ipv4_addr};
 
 
 
@@ -17,7 +17,6 @@ pub struct PacketBuilder {
     headers: HeaderBuffer,
     packets: PacketBuffer,
     src_ip:  Ipv4Addr,
-    src_mac: MacAddr,
     rng:     ThreadRng,
 }
 
@@ -38,7 +37,7 @@ impl PacketBuilder {
     pub fn build_tcp_ether_packet(&mut self, src_ip: Ipv4Addr, dst_ip: Ipv4Addr) -> &[u8] {
         self.add_ether_header();
         self.add_ip_header(40, IpNextHeaderProtocols::Tcp, src_ip, dst_ip);
-        self.add_tcp_header(dst_ip, 80);
+        self.add_tcp_header(src_ip, dst_ip, 80);
         
         self.packets.tcp_layer2[..14].copy_from_slice(&self.headers.ether);
         self.packets.tcp_layer2[14..34].copy_from_slice(&self.headers.ip);
@@ -49,8 +48,8 @@ impl PacketBuilder {
 
 
     pub fn build_tcp_ip_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
-        self.add_ip_header(40, IpNextHeaderProtocols::Tcp, &self.src_ip, dst_ip);
-        self.add_tcp_header(&self.src_ip, dst_ip, dst_port);
+        self.add_ip_header(40, IpNextHeaderProtocols::Tcp, self.src_ip, dst_ip);
+        self.add_tcp_header(self.src_ip, dst_ip, dst_port);
         
         self.packets.tcp_layer3[..20].copy_from_slice(&self.headers.ip);
         self.packets.tcp_layer3[20..].copy_from_slice(&self.headers.tcp);
@@ -62,7 +61,7 @@ impl PacketBuilder {
     pub fn build_udp_ether_packet(&mut self, src_ip: Ipv4Addr, dst_ip: Ipv4Addr) -> &[u8] {
         self.add_ether_header();
         self.add_ip_header(28, IpNextHeaderProtocols::Udp, src_ip, dst_ip);
-        self.add_udp_header(dst_ip, 53);
+        self.add_udp_header(src_ip, dst_ip, 53);
 
         self.packets.udp_layer2[..14].copy_from_slice(&self.headers.ether);
         self.packets.udp_layer2[14..34].copy_from_slice(&self.headers.ip);
@@ -74,8 +73,8 @@ impl PacketBuilder {
 
 
     pub fn build_udp_ip_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
-        self.add_ip_header(28, IpNextHeaderProtocols::Udp, &self.src_ip, dst_ip);
-        self.add_udp_header(&self.src_ip, dst_ip, dst_port);
+        self.add_ip_header(28, IpNextHeaderProtocols::Udp, self.src_ip, dst_ip);
+        self.add_udp_header(self.src_ip, dst_ip, dst_port);
 
         self.packets.udp_layer3[..20].copy_from_slice(&self.headers.ip);
         self.packets.udp_layer3[20..].copy_from_slice(&self.headers.udp);
