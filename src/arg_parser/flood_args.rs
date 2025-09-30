@@ -1,10 +1,16 @@
 pub use std::net::Ipv4Addr;
 pub use clap::Parser;
+use crate::utils::default_iface_name;
 
 
 #[derive(Parser)]
 #[command(name = "flood", about = "Packet Flooder")]
 pub struct FloodArgs {
+
+    /// Define a network interface to send the packets
+    #[arg(short, long, default_value_t = default_iface_name())]
+    pub iface: String,
+
 
     /// Define a source IP
     #[arg(long = "src-ip")]
