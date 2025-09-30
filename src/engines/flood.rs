@@ -46,14 +46,14 @@ impl PacketFlood {
 
     fn setup_tools(&self) -> (PacketBuilder, Layer2PacketSender) {
         let pkt_builder = PacketBuilder::new();
-        let pkt_sender  = Layer2PacketSender::new(self.args.iface);
+        let pkt_sender  = Layer2PacketSender::new(self.args.iface.clone());
         (pkt_builder, pkt_sender)
     }
 
 
 
     fn send_endlessly(&mut self) {
-        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
+        let (mut pkt_builder, mut pkt_sender) = self.setup_tools();
 
         loop {
             let src_ip = self.get_src_ip();

@@ -3,7 +3,6 @@ use pnet::{
     packet::{ip::IpNextHeaderProtocols, ipv4::MutableIpv4Packet},
     transport::{transport_channel, TransportChannelType::Layer3, TransportSender},
 };
-use crate::utils::default_iface_name;
 
 
 

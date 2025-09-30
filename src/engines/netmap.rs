@@ -3,7 +3,7 @@ use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
-use crate::pkt_kit::{PacketBuilder, PacketDissector, PacketSender, PacketSniffer};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
 use crate::utils::{inline_display, default_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
@@ -43,9 +43,9 @@ impl NetworkMapper {
 
 
 
-    fn setup_tools() -> (PacketBuilder, PacketSender, PacketSniffer) {
+    fn setup_tools() -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
         let pkt_builder     = PacketBuilder::new();
-        let pkt_sender      = PacketSender::new();
+        let pkt_sender      = Layer3PacketSender::new();
         let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
 
         pkt_sniffer.start_buffered_sniffer();
@@ -54,7 +54,7 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut PacketSender) {
+    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
