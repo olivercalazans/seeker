@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::arg_parser::FloodArgs;
-use crate::pkt_kit::{PacketBuilder, PacketSender};
+use crate::pkt_kit::{PacketBuilder, Layer2PacketSender};
 use crate::utils::{default_ipv4_net, inline_display};
 
 
@@ -44,9 +44,9 @@ impl PacketFlood {
 
 
 
-    fn setup_tools() -> (PacketBuilder, PacketSender) {
+    fn setup_tools(&self) -> (PacketBuilder, Layer2PacketSender) {
         let pkt_builder = PacketBuilder::new();
-        let pkt_sender  = PacketSender::new();
+        let pkt_sender  = Layer2PacketSender::new(self.args.iface);
         (pkt_builder, pkt_sender)
     }
 

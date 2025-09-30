@@ -1,6 +1,5 @@
 use std::net::Ipv4Addr;
 use pnet::{
-    datalink::{self, Channel::Ethernet, DataLinkSender},
     packet::{ip::IpNextHeaderProtocols, ipv4::MutableIpv4Packet},
     transport::{transport_channel, TransportChannelType::Layer3, TransportSender},
 };
@@ -8,40 +7,19 @@ use crate::utils::default_iface_name;
 
 
 
-pub struct PacketSender {
-    layer2_socket:     Box<dyn DataLinkSender>,
+pub struct Layer3PacketSender {
     layer3_tcp_socket: TransportSender,
     layer3_udp_socket: TransportSender,
 }
 
 
-impl PacketSender {
+impl Layer3PacketSender {
 
     pub fn new() -> Self{
         Self {
-            layer2_socket:     Self::create_layer2_sender(),
             layer3_tcp_socket: Self::create_layer3_tcp_socket(),
             layer3_udp_socket: Self::create_layer3_udp_socket()
         }
-    }
-
-
-
-    fn create_layer2_sender() -> Box<dyn DataLinkSender> {
-        let iface_name = default_iface_name();
-        
-        let interface  = datalink::interfaces()
-            .into_iter()
-            .find(|iface| iface.name == iface_name)
-            .expect("Interface not found");
-
-        let (tx, _rx) = match datalink::channel(&interface, Default::default()) {
-            Ok(Ethernet(tx, rx)) => (tx, rx),
-            Ok(_)  => panic!("Unhandled channel type"),
-            Err(e) => panic!("Error creating datalink channel: {}", e),
-        };
-
-        tx
     }
 
     
@@ -60,13 +38,6 @@ impl PacketSender {
             .expect("[ERROR] Could not create UDP transport channel");
 
         udp_sender
-    }
-
-
-
-    pub fn send_layer2_frame(&mut self, packet: &[u8]) {
-        let _ = self.layer2_socket.send_to(packet, None)
-                    .expect("Failed to send frame via datalink");
     }
 
 
