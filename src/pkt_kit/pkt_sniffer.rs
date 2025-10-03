@@ -4,13 +4,14 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 use pcap::{Device, Capture};
-use crate::utils::{default_ipv4_addr, default_iface_cidr};
+use crate::utils::{get_ipv4_addr, get_iface_cidr};
 
 
 
 pub struct PacketSniffer {
     command:     String,
     handle:      Option<thread::JoinHandle<()>>,
+    iface:       String,
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
     running:     Arc<AtomicBool>,
     src_ip:      String,
@@ -20,9 +21,10 @@ pub struct PacketSniffer {
 
 impl PacketSniffer {
 
-    pub fn new(command: String, target_ip: String) -> Self {
+    pub fn new(command: String, iface: String, target_ip: String) -> Self {
         Self {
             command,
+            iface,
             handle:      None,
             raw_packets: Arc::new(Mutex::new(Vec::new())),
             running:     Arc::new(AtomicBool::new(false)),
@@ -88,10 +90,10 @@ impl PacketSniffer {
 
 
     fn get_bpf_filter_parameters(&self) -> String {
-        let my_ip = default_ipv4_addr().to_string();
+        let my_ip = get_ipv4_addr(&self.iface);
 
         match self.command.as_str() {
-            "netmap"    => format!("tcp and dst host {} and src net {}", my_ip, default_iface_cidr()),
+            "netmap"    => format!("tcp and dst host {} and src net {}", my_ip, get_iface_cidr(&self.iface)),
             "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
             "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
             _           => panic!("[ ERROR ] Unknown filter: {}", self.command),

@@ -4,7 +4,7 @@ use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
-use crate::utils::{inline_display, default_ipv4_net, get_host_name, DelayTimeGenerator};
+use crate::utils::{inline_display, get_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
 
@@ -36,17 +36,17 @@ impl NetworkMapper {
 
 
     fn send_and_receive(&mut self) {
-        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = Self::setup_tools();
+        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
         self.send_probes(&mut pkt_builder, &mut pkt_sender);
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
 
 
-    fn setup_tools() -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
-        let pkt_builder     = PacketBuilder::new();
+    fn setup_tools(&self) -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
+        let pkt_builder     = PacketBuilder::new(self.args.iface.clone());
         let pkt_sender      = Layer3PacketSender::new();
-        let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), "".to_string());
+        let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), self.args.iface.clone(), "".to_string());
 
         pkt_sniffer.start_buffered_sniffer();
         (pkt_builder, pkt_sender, pkt_sniffer)
@@ -70,7 +70,7 @@ impl NetworkMapper {
 
 
     fn get_data_for_loop(&self) -> (Ipv4AddrRange, usize, Vec<f32>) {
-        let ip_range = Self::get_ip_range();
+        let ip_range = self.get_ip_range();
         let total    = ip_range.clone().count();
         let delays   = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), total);
         (ip_range, total, delays)
@@ -78,8 +78,8 @@ impl NetworkMapper {
 
 
 
-    fn get_ip_range() -> Ipv4AddrRange {
-        default_ipv4_net().hosts()
+    fn get_ip_range(&self) -> Ipv4AddrRange {
+        get_ipv4_net(&self.args.iface).hosts()
     }
 
 

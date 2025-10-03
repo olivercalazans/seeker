@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 use crate::arg_parser::PortScanArgs;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
-use crate::utils::{PortGenerator, inline_display, get_host_name, DelayTimeGenerator};
+use crate::utils::{PortGenerator, inline_display, get_host_name, DelayTimeGenerator, default_iface_name};
 
 
 
@@ -58,9 +58,10 @@ impl PortScanner {
 
 
     fn setup_tools(&self) -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
-        let pkt_builder     = PacketBuilder::new();
+        let iface           = default_iface_name();
+        let pkt_builder     = PacketBuilder::new(iface.clone());
         let pkt_sender      = Layer3PacketSender::new();
-        let mut pkt_sniffer = PacketSniffer::new(self.filter(), self.args.target_ip.to_string());
+        let mut pkt_sniffer = PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string());
 
         pkt_sniffer.start_buffered_sniffer();
         thread::sleep(Duration::from_secs_f32(0.5));

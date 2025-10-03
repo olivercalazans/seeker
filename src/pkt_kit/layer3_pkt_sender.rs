@@ -25,7 +25,7 @@ impl Layer3PacketSender {
 
     fn create_layer3_tcp_socket() -> TransportSender {
         let (tcp_sender, _) = transport_channel(4096, Layer3(IpNextHeaderProtocols::Tcp))
-            .expect("[ERROR] Could not create TCP transport channel");
+            .expect("[ ERROR ] Could not create TCP transport channel");
         
         tcp_sender
     }
@@ -34,7 +34,7 @@ impl Layer3PacketSender {
 
     fn create_layer3_udp_socket() -> TransportSender {
         let (udp_sender, _) = transport_channel(4096, Layer3(IpNextHeaderProtocols::Udp))
-            .expect("[ERROR] Could not create UDP transport channel");
+            .expect("[ ERROR ] Could not create UDP transport channel");
 
         udp_sender
     }

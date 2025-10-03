@@ -22,12 +22,12 @@ impl Layer2PacketSender {
         let interface  = datalink::interfaces()
             .into_iter()
             .find(|iface| iface.name == iface_name)
-            .expect("[ERROR] Interface not found");
+            .expect("[ ERROR ] Interface not found");
 
         let (tx, _rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
-            Ok(_)  => panic!("[ERROR] Unhandled channel type"),
-            Err(e) => panic!("[ERROR] Error creating datalink channel: {}", e),
+            Ok(_)  => panic!("[ ERROR ] Unhandled channel type"),
+            Err(e) => panic!("[ ERROR ] Error creating datalink channel: {}", e),
         };
 
         tx
@@ -36,7 +36,7 @@ impl Layer2PacketSender {
 
     pub fn send_layer2_frame(&mut self, packet: &[u8]) {
         let _ = self.layer2_socket.send_to(packet, None)
-                    .expect("[ERROR] Failed to send frame via datalink");
+                    .expect("[ ERROR ] Failed to send frame via datalink");
     }
 
 }

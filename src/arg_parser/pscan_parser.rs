@@ -25,8 +25,8 @@ pub struct PortScanArgs {
     /// Add a delay between packet transmissions.
     ///
     /// Examples: 0.5 or 1-2 (seconds).
-    #[arg(short, long)]
-    pub delay: Option<String>,
+    #[arg(short, long, default_value = "0.04")]
+    pub delay: String,
 
     
     /// Scan UDP ports
