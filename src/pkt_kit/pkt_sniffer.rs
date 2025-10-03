@@ -60,8 +60,8 @@ impl PacketSniffer {
 
 
     fn create_sniffer(&self) -> Capture<pcap::Active> {
-        let dev     = PacketSniffer::get_default_iface();
-        let mut cap = PacketSniffer::open_capture(dev);
+        let dev     = self.get_default_iface();
+        let mut cap = PacketSniffer::open_capture(dev.clone());
         let filter  = self.get_bpf_filter_parameters();
         cap.filter(&filter, true).unwrap();
         
@@ -71,10 +71,12 @@ impl PacketSniffer {
 
 
 
-    fn get_default_iface() -> Device {
-        Device::lookup()
-            .expect("No default interface")
+    fn get_default_iface(&self) -> Device {
+        Device::list()
             .unwrap()
+            .into_iter()
+            .find(|d| d.name == self.iface)
+            .unwrap_or_else(|| panic!("Interface '{}' not found", self.iface))
     }
 
 
