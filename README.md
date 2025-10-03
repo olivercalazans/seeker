@@ -1,6 +1,6 @@
 <h1 align="center"> Seeker </h1>
 
-**Seeker** is a command-line tool developed in Rust for network analysis and exploration. It allows users to gather information about active devices and services, providing a simple and efficient interface for Linux users. What it can do:
+**Seeker** is a command-line tool developed in Rust for network exploration, device and service enumeration, and offensive security testing on Linux. It provides a compact, efficient interface for scanning, probing, and capturing network data, aimed at defenders and red‑teamers alike. What it can do:
 
 <br>
 
