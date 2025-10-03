@@ -13,8 +13,8 @@ pub struct PortScanArgs {
     /// Scan specific ports or ranges of ports (can be combined).
     ///
     /// Examples: Specific: 22,80 | Range: 20-50 | Combined: 22,50-100
-    #[arg(short, long)]
-    pub ports: Option<String>,
+    #[arg(short, long, default_value = "0-100")]
+    pub ports: String,
 
 
     /// Scan the ports in random order
@@ -25,8 +25,8 @@ pub struct PortScanArgs {
     /// Add a delay between packet transmissions.
     ///
     /// Examples: 0.5 or 1-2 (seconds).
-    #[arg(short, long)]
-    pub delay: Option<String>,
+    #[arg(short, long, default_value = "0.04")]
+    pub delay: String,
 
     
     /// Scan UDP ports

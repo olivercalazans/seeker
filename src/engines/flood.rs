@@ -1,8 +1,8 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::arg_parser::FloodArgs;
-use crate::pkt_kit::{PacketBuilder, PacketSender};
-use crate::utils::{default_ipv4_net, inline_display};
+use crate::pkt_kit::{PacketBuilder, Layer2PacketSender};
+use crate::utils::{get_ipv4_net, inline_display};
 
 
 
@@ -37,23 +37,23 @@ impl PacketFlood {
 
 
     fn set_ip_range(&mut self) {
-        let net    = default_ipv4_net();
+        let net    = get_ipv4_net(&self.args.iface);
         self.start = net.network().into();
         self.end   = net.broadcast().into();
     }
 
 
 
-    fn setup_tools() -> (PacketBuilder, PacketSender) {
-        let pkt_builder = PacketBuilder::new();
-        let pkt_sender  = PacketSender::new();
+    fn setup_tools(iface: String) -> (PacketBuilder, Layer2PacketSender) {
+        let pkt_builder = PacketBuilder::new(iface.clone());
+        let pkt_sender  = Layer2PacketSender::new(iface.clone());
         (pkt_builder, pkt_sender)
     }
 
 
 
     fn send_endlessly(&mut self) {
-        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
+        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools(self.args.iface.clone());
 
         loop {
             let src_ip = self.get_src_ip();

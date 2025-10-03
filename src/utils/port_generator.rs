@@ -7,11 +7,8 @@ pub struct PortGenerator;
 
 impl PortGenerator {
 
-    pub fn get_ports(ports_str: Option<String>, random: bool) -> Vec<u16> {
-        let mut ports_vec: Vec<u16> = match ports_str {
-            Some(p) => Self::generate_specified_ports(p),
-            None    => (1..=100).collect(),
-        };
+    pub fn get_ports(ports_str: String, random: bool) -> Vec<u16> {
+        let mut ports_vec = Self::generate_ports(ports_str);
 
         if random {
             Self::shuffle_ports(&mut ports_vec);
@@ -22,7 +19,7 @@ impl PortGenerator {
 
 
 
-    fn generate_specified_ports(ports_str: String) -> Vec<u16> {
+    fn generate_ports(ports_str: String) -> Vec<u16> {
         let mut ports: BTreeSet<u16> = BTreeSet::new();
         let parts: Vec<&str>         = ports_str.split(",").collect();
         

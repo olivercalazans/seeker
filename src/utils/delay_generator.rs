@@ -6,18 +6,12 @@ pub struct DelayTimeGenerator;
 
 impl DelayTimeGenerator {
 
-    pub fn get_delay_list(delay_arg: Option<String>, quantity: usize) -> Vec<f32> {
-        if delay_arg.is_none() {
-            return Self::fixed_delay_range("0.04".to_string(), quantity)
+    pub fn get_delay_list(delay_arg: String, quantity: usize) -> Vec<f32> {
+        if delay_arg.contains("-") {
+            return Self::random_delay_range(delay_arg, quantity)
         }
 
-        let delay_str = delay_arg.unwrap();
-
-        if delay_str.contains("-") {
-            return Self::random_delay_range(delay_str, quantity)
-        }
-
-        Self::fixed_delay_range(delay_str, quantity)
+        Self::fixed_delay_range(delay_arg, quantity)
     }
 
 

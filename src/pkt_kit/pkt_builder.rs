@@ -9,7 +9,7 @@ use pnet::packet::{
     udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
 };
 use crate::pkt_kit::{HeaderBuffer, PacketBuffer};
-use crate::utils::{default_ipv4_addr};
+use crate::utils::{get_ipv4_addr};
 
 
 
@@ -23,11 +23,12 @@ pub struct PacketBuilder {
 
 impl PacketBuilder {
 
-    pub fn new() -> Self {
+    pub fn new(iface: String) -> Self {
+        let iface_ip = get_ipv4_addr(&iface);
         Self {
             headers: HeaderBuffer::default(),
             packets: PacketBuffer::default(),
-            src_ip:  default_ipv4_addr(),
+            src_ip:  iface_ip,
             rng:     rand::thread_rng(),
         }
     }
