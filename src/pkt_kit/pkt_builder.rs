@@ -23,12 +23,11 @@ pub struct PacketBuilder {
 
 impl PacketBuilder {
 
-    pub fn new(iface: String) -> Self {
-        let iface_ip = get_ipv4_addr(&iface);
+    pub fn new(iface: String, src_ip: Option<Ipv4Addr>) -> Self {
         Self {
             headers: HeaderBuffer::default(),
             packets: PacketBuffer::default(),
-            src_ip:  iface_ip,
+            src_ip:  src_ip.unwrap_or_else(|| get_ipv4_addr(&iface)),
             rng:     rand::thread_rng(),
         }
     }

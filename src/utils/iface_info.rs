@@ -1,4 +1,4 @@
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use ipnet::Ipv4Net;
 use netdev::interface::{get_default_interface, get_interfaces};
 use pnet::datalink::{self, MacAddr};
@@ -59,3 +59,22 @@ pub fn default_iface_mac(iface_name: &String) -> MacAddr {
     }
     abort(format!("[ERROR] Could not find the default interface with IP {}", my_ip));
 }
+
+
+
+pub fn source_ip_from_iface(dst: Ipv4Addr) -> Ipv4Addr {
+    let sockaddr = SocketAddrV4::new(dst, 53);
+    
+    let sock = UdpSocket::bind(("0.0.0.0", 0))
+        .unwrap_or_else(|e| abort(&format!("Failed to bind UDP socket: {}", e)));
+    
+    sock.connect(sockaddr)
+        .unwrap_or_else(|e| abort(&format!("Failed to connect UDP socket: {}", e)));
+
+    match sock.local_addr().unwrap().ip() {
+        std::net::IpAddr::V4(v4) => v4,
+        _ => abort("Expected a local IPv4 address, but got IPv6"),
+    }
+}
+
+
