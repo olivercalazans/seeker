@@ -45,7 +45,7 @@ impl PacketFlood {
 
 
     fn setup_tools(iface: String) -> (PacketBuilder, Layer2PacketSender) {
-        let pkt_builder = PacketBuilder::new(iface.clone());
+        let pkt_builder = PacketBuilder::new(iface.clone(), None);
         let pkt_sender  = Layer2PacketSender::new(iface.clone());
         (pkt_builder, pkt_sender)
     }

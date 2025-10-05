@@ -62,7 +62,7 @@ pub fn default_iface_mac(iface_name: &String) -> MacAddr {
 
 
 
-pub fn source_ip_for_dest(dst: Ipv4Addr) -> Ipv4Addr {
+pub fn source_ip_from_iface(dst: Ipv4Addr) -> Ipv4Addr {
     let sockaddr = SocketAddrV4::new(dst, 53);
     
     let sock = UdpSocket::bind(("0.0.0.0", 0))
