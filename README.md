@@ -12,14 +12,24 @@
 
 
 ## Dependencies
-This project uses Cargo, Rust's package manager and build system, to manage dependencies.  
+
+This project uses **Cargo**, Rust's package manager and build system, to manage its Rust dependencies.  
 If you don't have Cargo installed, follow the steps on the [official Rust installation page](https://www.rust-lang.org/tools/install).
 
-All dependencies are managed by Cargo, so there's no need to install them manually.  
-You can find them in the [Cargo.toml](https://github.com/olivercalazans/seeker/blob/main/Cargo.toml) file.
+All Rust dependencies are managed automatically by Cargo — no manual installation required.  
+You can find them listed in the [Cargo.toml](https://github.com/olivercalazans/seeker/blob/main/Cargo.toml) file.
 
 > [!IMPORTANT]
-> Although the code is designed to run on Linux systems, it can also be used on Windows via WSL (Windows Subsystem for Linux).
+> In addition to Cargo-managed crates, this project requires some **system-level dependencies**:
+>
+> - `libpcap` — required for network packet capture  
+> - A C compiler and linker (e.g. `gcc` or `clang`) — required to build and link Rust binaries  
+>
+> Make sure these are installed before building.
+
+> [!NOTE]
+> The code is primarily designed for Linux systems, but it can also run on Windows via **WSL (Windows Subsystem for Linux)**.
+
 <br>
 
 
