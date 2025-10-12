@@ -9,7 +9,7 @@ pub struct NetMapArgs {
     /// Add a delay between packet transmissions.
     ///
     /// Examples: 0.5 or 1-2 (seconds).
-    #[arg(short, long, default_value = "0.04")]
+    #[arg(short, long, default_value = "0.03")]
     pub delay: String,
 
 
