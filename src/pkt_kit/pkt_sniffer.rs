@@ -1,8 +1,4 @@
-use std::{
-    thread,
-    sync::{Arc, Mutex},
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::{thread, time::Duration, sync::{Arc, Mutex}, sync::atomic::{AtomicBool, Ordering}};
 use pcap::{Device, Capture};
 use crate::utils::{get_ipv4_addr, get_iface_cidr};
 
@@ -26,7 +22,7 @@ impl PacketSniffer {
             command,
             iface,
             handle:      None,
-            raw_packets: Arc::new(Mutex::new(Vec::new())),
+            raw_packets: Arc::new(Mutex::new(Vec::with_capacity(256))),
             running:     Arc::new(AtomicBool::new(false)),
             src_ip:      target_ip,
         }
@@ -43,18 +39,6 @@ impl PacketSniffer {
         self.handle = Some(thread::spawn(move || {
             Self::capture_loop(cap, running, packets)
         }));
-    }
-
-
-
-    fn capture_loop(mut cap: Capture<pcap::Active>, running: Arc<AtomicBool>, packets: Arc<Mutex<Vec<Vec<u8>>>>) {
-        while running.load(Ordering::Relaxed) {
-            if let Ok(pkt) = cap.next_packet() {
-                if let Ok(mut v) = packets.lock() {
-                    v.push(pkt.data.to_vec());
-                }
-            }
-        }
     }
 
 
@@ -99,6 +83,38 @@ impl PacketSniffer {
             "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
             "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
             _           => panic!("[ ERROR ] Unknown filter: {}", self.command),
+        }
+    }
+
+
+
+    fn capture_loop(mut cap: Capture<pcap::Active>, running: Arc<AtomicBool>, packets: Arc<Mutex<Vec<Vec<u8>>>>) {
+        while running.load(Ordering::Relaxed) {
+            match cap.next_packet() {
+                Ok(pkt) => {
+                    if let Ok(mut v) = packets.lock() {
+                        v.push(pkt.data.to_vec());
+                    }
+                }
+                Err(_) => std::thread::sleep(Duration::from_micros(500)),
+            }
+        }
+        Self::display_pcap_stats(&mut cap);
+    }
+
+
+
+    fn display_pcap_stats(cap: &mut Capture<pcap::Active>) {
+        match cap.stats() {
+            Ok(stats) => {
+                println!(
+                    "Packets received = {}, dropped = {}, if_dropped = {}",
+                    stats.received, stats.dropped, stats.if_dropped
+                );
+            }
+            Err(err) => {
+                eprintln!("[ ERROR ] failed to get stats: {}", err);
+            }
         }
     }
 
