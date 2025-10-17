@@ -21,7 +21,7 @@ fn main() {
 #[derive(Default)]
 struct Command {
     arguments: Vec<String>,
-    command: String,
+    command:   String,
 }
 
 
@@ -55,14 +55,29 @@ impl Command {
 
     fn execute_function(&mut self) {
         match self.command.as_str() {
+            "-h"     => Self::display_commands(),
+            "--help" => Self::display_commands(),
             "flood"  => self.execute_flood(),
             "netmap" => self.execute_netmap(),
-            "pscan"  => self.execute_portsc(),
+            "pscan"  => self.execute_pscan(),
+            "protun" => self.execute_protun(),
             _        => abort(format!("No command '{}'", self.command)),
         }
     }
 
 
+    
+    fn display_commands() {
+        println!("\nAvailable commands:");
+        println!("\tflood  -> Packet Flooding");
+        println!("\tnetmap -> Network Mapping");
+        println!("\tpscan  -> Port Scanning");
+        println!("\tprotun -> Protocol Tunneling");
+        println!("\n");
+    }
+
+
+    
     fn execute_flood(&self) {
         let cmd_args  = FloodArgs::parse_from(self.arguments.clone());
         let mut flood = PacketFlood::new(cmd_args);
@@ -70,6 +85,7 @@ impl Command {
     }
 
 
+    
     fn execute_netmap(&self) {
         let cmd_args   = NetMapArgs::parse_from(self.arguments.clone());
         let mut mapper = NetworkMapper::new(cmd_args);
@@ -77,10 +93,17 @@ impl Command {
     }
 
 
-    fn execute_portsc(&self) {
+    
+    fn execute_pscan(&self) {
         let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
         let mut scanner = PortScanner::new(cmd_args, false);
         scanner.execute();
+    }
+
+
+    
+    fn execute_protun(&self) {
+        let mut tunnel = ProtocolTunnel::execute();
     }
 
 }
