@@ -4,4 +4,10 @@ use crate::utils::default_iface_name;
 
 #[derive(Parser)]
 #[command(name = "protun", about = "Protocol tunneling")]
-pub struct NetMapArgs {}
+pub struct TunnelArgs {
+
+    /// Define a network interface to send the probes
+    #[arg(short, long, default_value_t = default_iface_name())]
+    pub iface: String,
+
+}

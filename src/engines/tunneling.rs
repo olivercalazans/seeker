@@ -1,27 +1,33 @@
+use crate::arg_parser::TunnelArgs;
 use crate::pkt_kit::{PacketBuilder, Layer3PacketSender};
 
 
-pub struct ProtocolTunnel;
+
+pub struct ProtocolTunneler {
+    pkt_builder: PacketBuilder,
+    pkt_sender:  Layer3PacketSender,
+}
 
 
-impl ProtocolTunnel {
 
-    pub fn execute() {
-        Self::send_probes();
+impl ProtocolTunneler {
+
+    pub fn new(args: TunnelArgs) -> Self {
+        Self {
+            pkt_builder: PacketBuilder::new(args.iface.clone(), None),
+            pkt_sender:  Layer3PacketSender::new(args.iface.clone()),
+        }
     }
 
 
 
-    fn setup_tools(iface: String) -> (PacketBuilder, Layer2PacketSender) {
-        let pkt_builder = PacketBuilder::new(iface.clone(), None);
-        let pkt_sender  = Layer3PacketSender::new(iface.clone());
-        (pkt_builder, pkt_sender)
+    pub fn execute(&mut self) {
+        self.
     }
 
 
 
-    fn send_probes() {
-        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools();
+    fn send_() {
     }
 
 }

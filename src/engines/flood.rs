@@ -6,7 +6,7 @@ use crate::utils::{get_ipv4_net, inline_display};
 
 
 
-pub struct PacketFlood {
+pub struct PacketFlooder {
     args:      FloodArgs,
     start:     u32,
     end:       u32,
@@ -15,7 +15,7 @@ pub struct PacketFlood {
 }
 
 
-impl PacketFlood {
+impl PacketFlooder {
 
     pub fn new(args: FloodArgs) -> Self {
         Self {
