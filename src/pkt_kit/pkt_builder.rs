@@ -2,6 +2,7 @@ use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use pnet::datalink::MacAddr;
 use pnet::packet::{
+    util::checksum;
     ethernet::{EtherTypes, MutableEthernetPacket},
     ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
@@ -124,7 +125,7 @@ impl PacketBuilder {
         icmp_header.set_checksum(0);
 
         let checksum = checksum(icmp_header.packet(), 1);
-        icmp_header.set_checksum(csum);
+        icmp_header.set_checksum(checksum);
     }
 
 

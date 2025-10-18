@@ -21,19 +21,21 @@ impl Default for HeaderBuffer {
 
 
 pub struct PacketBuffer {
-    pub tcp_layer2: [u8; 54],
-    pub tcp_layer3: [u8; 40],
-    pub udp_layer2: [u8; 42],
-    pub udp_layer3: [u8; 28],
+    pub tcp_layer2:  [u8; 54],
+    pub tcp_layer3:  [u8; 40],
+    pub udp_layer2:  [u8; 42],
+    pub udp_layer3:  [u8; 28],
+    pub icmp_layer3: [u8; 28],
 }
 
 impl Default for PacketBuffer {
     fn default() -> Self {
         Self {
-            tcp_layer2: [0; 54],
-            tcp_layer3: [0; 40],
-            udp_layer2: [0; 42],
-            udp_layer3: [0; 28],
+            tcp_layer2:  [0; 54],
+            tcp_layer3:  [0; 40],
+            udp_layer2:  [0; 42],
+            udp_layer3:  [0; 28],
+            icmp_layer3: [0; 28],
         }
     }
 }
