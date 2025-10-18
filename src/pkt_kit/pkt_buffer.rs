@@ -1,6 +1,7 @@
 pub struct HeaderBuffer {
     pub tcp:   [u8; 20],
     pub udp:   [u8; 8],
+    pub icmp:  [u8; 8],
     pub ip:    [u8; 20],
     pub ether: [u8; 14],
 }
@@ -10,6 +11,7 @@ impl Default for HeaderBuffer {
         Self {
             tcp:   [0; 20],
             udp:   [0; 8],
+            icmp:  [0; 8],
             ip:    [0; 20],
             ether: [0; 14],
         }

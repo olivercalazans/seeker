@@ -72,7 +72,6 @@ impl PacketBuilder {
 
 
 
-
     pub fn build_udp_ip_packet(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
         self.create_ip_header(28, IpNextHeaderProtocols::Udp, self.src_ip, dst_ip);
         self.create_udp_header(self.src_ip, dst_ip, dst_port);
@@ -115,12 +114,17 @@ impl PacketBuilder {
 
 
 
-    fn create_icmp_header(&mut self, payload: String) {
-        icmp_packet.set_icmp_type(IcmpTypes::EchoRequest);
-        icmp_packet.set_icmp_code(echo_request::IcmpCodes::NoCode);
-        icmp_packet.set_identifier(0x1234);
-        icmp_packet.set_sequence_number(1);
-        icmp_packet.set_payload(payload);
+    fn create_icmp_header(&mut self) {
+        let mut icmp_header = MutableEchoRequestPacket::new(&mut self.headers.icmp).unwrap();
+        icmp_header.set_icmp_type(IcmpTypes::EchoRequest);
+        icmp_header.set_icmp_code(echo_request::IcmpCodes::NoCode);
+        icmp_header.set_identifier(0x1234);
+        icmp_header.set_sequence_number(1);
+        icmp_header.set_payload(&[]);
+        icmp_header.set_checksum(0);
+
+        let checksum = checksum(icmp_header.packet(), 1);
+        icmp_header.set_checksum(csum);
     }
 
 
