@@ -2,11 +2,11 @@ use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use pnet::datalink::MacAddr;
 use pnet::packet::{
-    util::checksum;
+    util::checksum, Packet,
     ethernet::{EtherTypes, MutableEthernetPacket},
     ip::{IpNextHeaderProtocols, IpNextHeaderProtocol},
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
-    icmp::{IcmpTypes, IcmpPacket, echo_request::MutableEchoRequestPacket},
+    icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
     tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
     udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
 };
@@ -129,13 +129,13 @@ impl PacketBuilder {
     fn create_icmp_header(&mut self) {
         let mut icmp_header = MutableEchoRequestPacket::new(&mut self.headers.icmp).unwrap();
         icmp_header.set_icmp_type(IcmpTypes::EchoRequest);
-        icmp_header.set_icmp_code(echo_request::IcmpCodes::NoCode);
+        icmp_header.set_icmp_code(IcmpCodes::NoCode);
         icmp_header.set_identifier(0x1234);
         icmp_header.set_sequence_number(1);
         icmp_header.set_payload(&[]);
         icmp_header.set_checksum(0);
 
-        let checksum = checksum(icmp_header.packet(), 1);
+        let checksum = checksum(&icmp_header.packet(), 1);
         icmp_header.set_checksum(checksum);
     }
 

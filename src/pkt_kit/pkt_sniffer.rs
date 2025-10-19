@@ -79,7 +79,7 @@ impl PacketSniffer {
         let my_ip = get_ipv4_addr(&self.iface);
 
         match self.command.as_str() {
-            "netmap"    => format!("tcp and dst host {} and src net {}", my_ip, get_iface_cidr(&self.iface)),
+            "netmap"    => format!("(dst host {} and src net {}) and (tcp or (icmp and icmp[0] = 0))", my_ip, get_iface_cidr(&self.iface)),
             "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
             "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
             _           => panic!("[ ERROR ] Unknown filter: {}", self.command),

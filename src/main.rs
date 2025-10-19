@@ -80,7 +80,7 @@ impl Command {
     
     fn execute_flood(&self) {
         let cmd_args  = FloodArgs::parse_from(self.arguments.clone());
-        let mut flood = PacketFlood::new(cmd_args);
+        let mut flood = PacketFlooder::new(cmd_args);
         flood.execute();
     }
 

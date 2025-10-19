@@ -15,14 +15,13 @@ impl ProtocolTunneler {
     pub fn new(args: TunnelArgs) -> Self {
         Self {
             pkt_builder: PacketBuilder::new(args.iface.clone(), None),
-            pkt_sender:  Layer3PacketSender::new(args.iface.clone()),
+            pkt_sender:  Layer3PacketSender::new(),
         }
     }
 
 
 
     pub fn execute(&mut self) {
-        self.
     }
 
 
