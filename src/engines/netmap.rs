@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{thread, time::Duration, collections::HashMap};
 use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
@@ -11,8 +11,9 @@ use crate::utils::{inline_display, get_ipv4_net, get_host_name, DelayTimeGenerat
 pub struct NetworkMapper {
     args:        NetMapArgs,
     raw_packets: Vec<Vec<u8>>,
-    active_ips:  Vec<Vec<String>>,
+    active_ips:  HashMap<String, Vec<String>>,
 }
+
 
 
 impl NetworkMapper {
@@ -21,7 +22,7 @@ impl NetworkMapper {
         Self {
             args,
             raw_packets: Vec::new(),
-            active_ips:  Vec::new(),
+            active_ips:  HashMap::new(),
         }
     }
 
@@ -37,7 +38,10 @@ impl NetworkMapper {
 
     fn send_and_receive(&mut self) {
         let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
-        self.send_probes(&mut pkt_builder, &mut pkt_sender);
+        
+        self.send_icmp_probes(&mut pkt_builder, &mut pkt_sender);
+        self.send_tcp_probes(&mut pkt_builder, &mut pkt_sender);
+        
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
@@ -54,9 +58,26 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
+        println!("Sending ICMP probes");
+        for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
+            let icmp_packet = pkt_builder.build_icmp_echo_req_packet(ip);
+            pkt_sender.send_layer3_icmp(icmp_packet, ip);
+            
+            Self::display_progress(i+1, total, ip.to_string(), *delay);
+            thread::sleep(Duration::from_secs_f32(*delay));
+        }
+        println!("");
+    }
+
+
+
+    fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+        let (ip_range, total, delays) = self.get_data_for_loop();
+
+        println!("Sending TCP probes");
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
             let tcp_packet = pkt_builder.build_tcp_ip_packet(ip, 80);
             pkt_sender.send_layer3_tcp(tcp_packet, ip);
@@ -85,7 +106,7 @@ impl NetworkMapper {
 
 
     fn display_progress(i: usize, total: usize, ip: String, delay: f32) {
-        let msg = format!("Packets sent: {}/{} - {:<15} - delay: {:.2}", i, total, ip, delay);
+        let msg = format!("\tPackets sent: {}/{} - {:<15} - delay: {:.2}", i, total, ip, delay);
         inline_display(msg);
     }
 
@@ -101,32 +122,25 @@ impl NetworkMapper {
 
     fn process_raw_packets(&mut self) {
         for packet in &self.raw_packets {
-            let mut info = Self::get_data_from_packet(packet);
+            let src_ip = PacketDissector::get_src_ip(packet);
+
+            if self.active_ips.contains_key(&src_ip) { continue }
+
+            let mut info: Vec<String> = Vec::new();
+
+            let mac_addr = PacketDissector::get_src_mac(packet);
+            info.push(mac_addr);
+
+            let device_name = get_host_name(&src_ip);
+            info.push(device_name);
             
             if self.args.portscan {
-                let ports = Self::scan_ports(info[0].clone());
+                let ports = Self::scan_ports(src_ip.clone());
                 info.push(ports);
             }
 
-            self.active_ips.push(info);
+            self.active_ips.insert(src_ip, info);
         }
-    }
-
-
-
-    fn get_data_from_packet(packet: &Vec<u8>) -> Vec<String> {
-        let mut info: Vec<String> = Vec::new();
-
-        let src_ip = PacketDissector::get_src_ip(packet);
-        info.push(src_ip.to_string());
-
-        let mac_addr = PacketDissector::get_src_mac(packet);
-        info.push(mac_addr);
-
-        let device_name = get_host_name(&src_ip);
-        info.push(device_name);
-
-        info
     }
 
 
@@ -145,11 +159,11 @@ impl NetworkMapper {
     fn display_result(&self) {
         Self::display_header();
 
-        for host in &self.active_ips{
-            println!("{}", format!("{:<15}  {}  {}", host[0], host[1], host[2]));
+        for (ip, host) in &self.active_ips{
+            println!("{}", format!("{:<15}  {}  {}", ip, host[0], host[1]));
 
             if self.args.portscan { 
-                println!("{}\n", format!("Open ports: {:#}", host[3]));
+                println!("{}\n", format!("Open ports: {:#}", host[2]));
             }
         }
     }
