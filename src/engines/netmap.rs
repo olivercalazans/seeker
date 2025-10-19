@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{thread, time::Duration, collections::BTreeSet, net::Ipv4Addr};
 use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
@@ -11,8 +11,9 @@ use crate::utils::{inline_display, get_ipv4_net, get_host_name, DelayTimeGenerat
 pub struct NetworkMapper {
     args:        NetMapArgs,
     raw_packets: Vec<Vec<u8>>,
-    active_ips:  Vec<Vec<String>>,
+    active_ips:  BTreeSet<Ipv4Addr, Vec<String>>,
 }
+
 
 
 impl NetworkMapper {
@@ -21,7 +22,7 @@ impl NetworkMapper {
         Self {
             args,
             raw_packets: Vec::new(),
-            active_ips:  Vec::new(),
+            active_ips:  BTreeSet::new(),
         }
     }
 
@@ -37,7 +38,10 @@ impl NetworkMapper {
 
     fn send_and_receive(&mut self) {
         let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
-        self.send_probes(&mut pkt_builder, &mut pkt_sender);
+        
+        self.send_icmp_probes(&mut pkt_builder, &mut pkt_sender);
+        self.send_tcp_probes(&mut pkt_builder, &mut pkt_sender);
+        
         self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
     }
 
@@ -54,7 +58,22 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+        let (ip_range, total, delays) = self.get_data_for_loop();
+
+        for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {
+            let tcp_packet = pkt_builder.build_icmp_echo_req_packet(ip);
+            pkt_sender.send_layer3_tcp(tcp_packet, ip);
+            
+            Self::display_progress(i+1, total, ip.to_string(), *delay);
+            thread::sleep(Duration::from_secs_f32(*delay));
+        }
+        println!("");
+    }
+
+
+
+    fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.iter()).enumerate() {

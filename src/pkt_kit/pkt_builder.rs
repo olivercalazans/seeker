@@ -84,6 +84,17 @@ impl PacketBuilder {
 
 
 
+    pub fn build_icmp_echo_req_packet(&mut self, dst_ip: Ipv4Addr) -> &[u8] {
+        self.create_ip_header(28, IpNextHeaderProtocols::Icmp, self.src_ip, dst_ip);
+        self.create_icmp_header();
+
+        self.packets.icmp_layer3[..20].copy_from_slice(&self.headers.ip);
+        self.packets.icmp_layer3[20..].copy_from_slice(&self.headers.icmp);
+        &self.packets.icmp_layer3
+    }
+
+
+
     fn create_tcp_header(&mut self, src_ip: Ipv4Addr, dst_ip: Ipv4Addr, dst_port: u16) {
         let src_port = self.rng.gen_range(10000..=65535);
         
