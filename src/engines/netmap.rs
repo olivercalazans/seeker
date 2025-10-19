@@ -122,31 +122,25 @@ impl NetworkMapper {
 
     fn process_raw_packets(&mut self) {
         for packet in &self.raw_packets {
-            let (ip, mut info) = Self::get_data_from_packet(packet);
+            let src_ip = PacketDissector::get_src_ip(packet);
+
+            if self.active_ips.contains_key(&src_ip) { continue }
+
+            let mut info: Vec<String> = Vec::new();
+
+            let mac_addr = PacketDissector::get_src_mac(packet);
+            info.push(mac_addr);
+
+            let device_name = get_host_name(&src_ip);
+            info.push(device_name);
             
-            if self.args.portscan && !self.active_ips.contains_key(&ip)  {
-                let ports = Self::scan_ports(info[0].clone());
+            if self.args.portscan {
+                let ports = Self::scan_ports(src_ip.clone());
                 info.push(ports);
             }
 
-            self.active_ips.insert(ip, info);
+            self.active_ips.insert(src_ip, info);
         }
-    }
-
-
-
-    fn get_data_from_packet(packet: &Vec<u8>) -> (String, Vec<String>) {
-        let mut info: Vec<String> = Vec::new();
-
-        let src_ip = PacketDissector::get_src_ip(packet);
-
-        let mac_addr = PacketDissector::get_src_mac(packet);
-        info.push(mac_addr);
-
-        let device_name = get_host_name(&src_ip);
-        info.push(device_name);
-
-        (src_ip, info)
     }
 
 

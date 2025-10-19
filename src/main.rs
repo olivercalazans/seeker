@@ -73,7 +73,7 @@ impl Command {
         println!("\tnetmap -> Network Mapping");
         println!("\tpscan  -> Port Scanning");
         println!("\tprotun -> Protocol Tunneling");
-        println!("\n");
+        println!("");
     }
 
 
