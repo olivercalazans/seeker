@@ -1,3 +1,6 @@
+pub mod header_builder;
+pub use header_builder::HeaderBuilder;
+
 pub mod pkt_buffer;
 pub use pkt_buffer::{HeaderBuffer, PacketBuffer};
 

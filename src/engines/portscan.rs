@@ -128,7 +128,7 @@ impl PortScanner {
     fn process_tcp_packets(&mut self) {
         let tcp_packets = mem::take(&mut self.raw_packets);
 
-        for packet in tcp_packets {
+        for packet in tcp_packets.into_iter() {
             let port = PacketDissector::get_tcp_src_port(&packet);
             self.open_ports.push(port);
         }

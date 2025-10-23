@@ -123,7 +123,7 @@ impl NetworkMapper {
     fn process_raw_packets(&mut self) {
         let raw_packets = mem::take(&mut self.raw_packets);
 
-        for packet in raw_packets {
+        for packet in raw_packets.into_iter() {
             let src_ip = PacketDissector::get_src_ip(&packet);
 
             if self.active_ips.contains_key(&src_ip) { continue }
