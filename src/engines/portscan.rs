@@ -85,8 +85,8 @@ impl PortScanner {
 
         for (port, delay) in ports.into_iter().zip(delays.into_iter())  {
 
-            let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, port);
-            pkt_sender.send_layer3_tcp(tcp_packet, self.args.target_ip);
+            let tcp_pkt = pkt_builder.build_tcp_ip_pkt(self.args.target_ip, port);
+            pkt_sender.send_layer3_tcp(tcp_pkt, self.args.target_ip);
 
             Self::display_progress(ip.clone(), port, delay);
             thread::sleep(Duration::from_secs_f32(delay));

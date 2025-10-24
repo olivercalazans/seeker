@@ -59,10 +59,10 @@ impl PacketFlooder {
             let src_ip = self.get_src_ip();
             let dst_ip = self.get_dst_ip();
             
-            let tcp_pkt = pkt_builder.build_tcp_ether_packet(src_ip, dst_ip);
+            let tcp_pkt = pkt_builder.build_tcp_ether_pkt(src_ip, dst_ip);
             pkt_sender.send_layer2_frame(tcp_pkt);
 
-            let udp_pkt = pkt_builder.build_udp_ether_packet(src_ip, dst_ip);
+            let udp_pkt = pkt_builder.build_udp_ether_pkt(src_ip, dst_ip);
             pkt_sender.send_layer2_frame(udp_pkt);
             
             self.display_progress();

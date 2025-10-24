@@ -7,7 +7,6 @@ pub struct Layer2PacketSender {
 }
 
 
-
 impl Layer2PacketSender {
 
     pub fn new(iface: String) -> Self{

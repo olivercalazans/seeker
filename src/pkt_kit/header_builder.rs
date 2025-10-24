@@ -41,12 +41,13 @@ impl HeaderBuilder {
             src_ip:     Ipv4Addr,
             src_port:   u16,
             dst_ip:     Ipv4Addr,
-            dst_port:   u16
+            dst_port:   u16,
+            len:        u16
         ) {
             let mut udp_header = MutableUdpPacket::new(udp_buffer).unwrap();
             udp_header.set_source(src_port);
             udp_header.set_destination(dst_port);
-            udp_header.set_length(8u16);
+            udp_header.set_length(len);
 
             let checksum = udp_checksum(&udp_header.to_immutable(), &src_ip, &dst_ip);
             udp_header.set_checksum(checksum);
@@ -76,7 +77,7 @@ impl HeaderBuilder {
             len:       u8,
             protocol:  IpNextHeaderProtocol,
             src_ip:    Ipv4Addr,
-            dst_ip:Ipv4Addr
+            dst_ip:    Ipv4Addr
         ) {
             let mut ip_header = MutableIpv4Packet::new(ip_buffer).unwrap();
             ip_header.set_version(4);

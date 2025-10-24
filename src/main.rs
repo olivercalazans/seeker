@@ -103,9 +103,9 @@ impl Command {
 
     
     fn execute_protun(&self) {
-        //let cmd_args   = TunnelArgs::parse_from(self.arguments.clone());
-        //let mut tunnel = ProtocolTunneler::execute(cmd_args);
-        //tunnel.execute();
+        let cmd_args   = TunnelArgs::parse_from(self.arguments.clone());
+        let mut tunnel = ProtocolTunneler::new(cmd_args);
+        tunnel.execute();
     }
 
 }
