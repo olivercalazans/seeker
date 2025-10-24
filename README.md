@@ -7,6 +7,7 @@
 - **Network Mapping**
 - **Port Scanning**
 - **Packet Flooding**
+- **Protocol Tunneling test**
 
 <br>
 
