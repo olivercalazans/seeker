@@ -63,8 +63,8 @@ impl NetworkMapper {
 
         println!("Sending ICMP probes");
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
-            let icmp_packet = pkt_builder.build_icmp_echo_req_packet(ip);
-            pkt_sender.send_layer3_icmp(icmp_packet, ip);
+            let icmp_pkt = pkt_builder.build_icmp_echo_req_pkt(ip);
+            pkt_sender.send_layer3_icmp(icmp_pkt, ip);
             
             Self::display_progress(i+1, total, ip.to_string(), delay);
             thread::sleep(Duration::from_secs_f32(delay));
@@ -79,8 +79,8 @@ impl NetworkMapper {
 
         println!("Sending TCP probes");
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
-            let tcp_packet = pkt_builder.build_tcp_ip_packet(ip, 80);
-            pkt_sender.send_layer3_tcp(tcp_packet, ip);
+            let tcp_pkt = pkt_builder.build_tcp_ip_pkt(ip, 80);
+            pkt_sender.send_layer3_tcp(tcp_pkt, ip);
             
             Self::display_progress(i+1, total, ip.to_string(), delay);
             thread::sleep(Duration::from_secs_f32(delay));
