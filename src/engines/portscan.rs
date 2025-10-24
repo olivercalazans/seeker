@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
 use crate::utils::{
@@ -79,16 +79,17 @@ impl PortScanner {
 
 
 
-    fn send_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_probes(&mut self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
         let (ip, delays) = self.get_data_for_loop();
+        let ports        = mem::take(&mut self.ports);
 
-        for (port, delay) in self.ports.iter().zip(delays.iter())  {
+        for (port, delay) in ports.into_iter().zip(delays.into_iter())  {
 
-            let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, *port);
+            let tcp_packet = pkt_builder.build_tcp_ip_packet(self.args.target_ip, port);
             pkt_sender.send_layer3_tcp(tcp_packet, self.args.target_ip);
 
-            Self::display_progress(ip.clone(), *port, *delay);
-            thread::sleep(Duration::from_secs_f32(*delay));
+            Self::display_progress(ip.clone(), port, delay);
+            thread::sleep(Duration::from_secs_f32(delay));
         }
         println!("");
     }
@@ -125,8 +126,10 @@ impl PortScanner {
 
 
     fn process_tcp_packets(&mut self) {
-        for packet in &self.raw_packets {
-            let port = PacketDissector::get_tcp_src_port(packet);
+        let tcp_packets = mem::take(&mut self.raw_packets);
+
+        for packet in tcp_packets.into_iter() {
+            let port = PacketDissector::get_tcp_src_port(&packet);
             self.open_ports.push(port);
         }
     }
