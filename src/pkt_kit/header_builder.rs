@@ -7,8 +7,8 @@ use pnet::packet::{
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
     icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
     tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
-    udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
 };
+use crate::pkt_kit::checksum::*;
 
 
 
@@ -39,20 +39,26 @@ impl HeaderBuilder {
 
 
     pub fn create_udp_header(
-            udp_buffer: &mut [u8],
-            src_ip:     Ipv4Addr,
-            src_port:   u16,
-            dst_ip:     Ipv4Addr,
-            dst_port:   u16,
-            len:        u16
-        ) {
-            let mut udp_header = MutableUdpPacket::new(udp_buffer).unwrap();
-            udp_header.set_source(src_port);
-            udp_header.set_destination(dst_port);
-            udp_header.set_length(len);
+            buffer:      &mut [u8],
+            src_ip:      Ipv4Addr,
+            src_port:    u16,
+            dst_ip:      Ipv4Addr,
+            dst_port:    u16,
+            len_payload: u16
+        ) {            
+            buffer[0] = (src_port >> 8) as u8;
+            buffer[1] = src_port as u8;
+            
+            buffer[2] = (dst_port >> 8) as u8;
+            buffer[3] = src_port as u8;
+            
+            let len   = 8 + len_payload;
+            buffer[4] = (len >> 8) as u8;
+            buffer[5] = len as u8;
 
-            let checksum = udp_checksum(&udp_header.to_immutable(), &src_ip, &dst_ip);
-            udp_header.set_checksum(checksum);
+            let cksum = udp_checksum(&buffer[..8], &src_ip, &dst_ip);
+            buffer[6] = (cksum >> 8) as u8;
+            buffer[7] = cksum as u8;
     }
 
 
