@@ -3,7 +3,7 @@ use pnet::datalink::{self, Channel::Ethernet, DataLinkSender};
 
 
 pub struct Layer2PacketSender {
-    layer2_socket:     Box<dyn DataLinkSender>,
+    layer2_socket: Box<dyn DataLinkSender>,
 }
 
 

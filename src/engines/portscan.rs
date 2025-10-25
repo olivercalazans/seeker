@@ -15,6 +15,7 @@ pub struct PortScanner {
 }
 
 
+
 impl PortScanner {
 
     pub fn new(args: PortScanArgs, return_data: bool) -> Self {

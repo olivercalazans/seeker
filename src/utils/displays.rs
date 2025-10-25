@@ -1,6 +1,7 @@
 use std::io::{self, Write};
 
 
+
 pub fn abort(error: impl Into<String>) -> ! {
     eprintln!("[ ERROR ] {}", error.into());
     std::process::exit(1);
