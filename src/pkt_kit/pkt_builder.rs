@@ -114,11 +114,11 @@ impl PacketBuilder {
 
 
 
-    fn random_mac(&mut self) -> MacAddr {
+    fn random_mac(&mut self) -> [u8; 6] {
         let mut bytes = [0u8; 6];
         for b in bytes.iter_mut() { *b = self.rng.r#gen(); }
         bytes[0] = (bytes[0] | 0x02) & 0xFE;
-        MacAddr::new(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5])
+        bytes
     }
 
 }

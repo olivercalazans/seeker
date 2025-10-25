@@ -1,8 +1,6 @@
 use std::net::Ipv4Addr;
-use pnet::datalink::MacAddr;
 use pnet::packet::{
-    util::checksum, Packet,
-    ethernet::{EtherTypes, MutableEthernetPacket},
+    util::checksum,
     ip::IpNextHeaderProtocol,
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
     icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
@@ -100,14 +98,13 @@ impl HeaderBuilder {
 
 
     pub fn create_ether_header(
-            ether_buffer: &mut [u8],
-            src_mac:      MacAddr,
-            dst_mac:      MacAddr
+            buffer:  &mut [u8],
+            src_mac: [u8; 6],
+            dst_mac: [u8; 6]
         ) {
-            let mut eth_header = MutableEthernetPacket::new(ether_buffer).unwrap();
-            eth_header.set_source(src_mac);
-            eth_header.set_destination(dst_mac);
-            eth_header.set_ethertype(EtherTypes::Ipv4);
+        buffer[0..6].copy_from_slice(&dst_mac);
+        buffer[6..12].copy_from_slice(&src_mac);
+        buffer[12..14].copy_from_slice(&0x0800u16.to_be_bytes());
     }
 
 }
