@@ -6,7 +6,6 @@ use pnet::packet::{
     ip::IpNextHeaderProtocol,
     ipv4::{MutableIpv4Packet, checksum as ip_checksum},
     icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
-    tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
 };
 use crate::pkt_kit::checksum::*;
 
@@ -19,21 +18,24 @@ pub struct HeaderBuilder;
 impl HeaderBuilder { 
 
     pub fn create_tcp_header(
-            tcp_buffer: &mut [u8],
-            src_ip:     Ipv4Addr,
-            src_port:   u16, 
-            dst_ip:     Ipv4Addr,
-            dst_port:   u16
-        ) {  
-            let mut tcp_header = MutableTcpPacket::new(tcp_buffer).unwrap();
-            tcp_header.set_source(src_port);
-            tcp_header.set_destination(dst_port);
-            tcp_header.set_sequence(1);
-            tcp_header.set_flags(TcpFlags::SYN);
-            tcp_header.set_window(64240);
-            tcp_header.set_data_offset(5);
-            let pseudo_header_sum = tcp_checksum(&tcp_header.to_immutable(), &src_ip, &dst_ip);
-            tcp_header.set_checksum(pseudo_header_sum);
+            buffer:   &mut [u8],
+            src_ip:   Ipv4Addr,
+            src_port: u16, 
+            dst_ip:   Ipv4Addr,
+            dst_port: u16
+        ) {
+            buffer[0..2].copy_from_slice(&src_port.to_be_bytes());
+            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
+            buffer[4..8].copy_from_slice(&1u32.to_be_bytes());
+            buffer[8..12].copy_from_slice(&0u32.to_be_bytes());
+            buffer[12] = 5 << 4;
+            buffer[13] = 0x02;
+            buffer[14..16].copy_from_slice(&64240u16.to_be_bytes());
+            buffer[16..18].copy_from_slice(&0u16.to_be_bytes());
+            buffer[18..20].copy_from_slice(&0u16.to_be_bytes());
+
+            let cksum = tcp_udp_checksum(&buffer, &src_ip, &dst_ip, 6);
+            buffer[16..18].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
@@ -46,19 +48,14 @@ impl HeaderBuilder {
             dst_port:    u16,
             len_payload: u16
         ) {            
-            buffer[0] = (src_port >> 8) as u8;
-            buffer[1] = src_port as u8;
+            buffer[..2].copy_from_slice(&src_port.to_be_bytes());            
+            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
             
-            buffer[2] = (dst_port >> 8) as u8;
-            buffer[3] = src_port as u8;
-            
-            let len   = 8 + len_payload;
-            buffer[4] = (len >> 8) as u8;
-            buffer[5] = len as u8;
+            let len = 8 + len_payload;
+            buffer[4..6].copy_from_slice(&len.to_be_bytes());
 
-            let cksum = udp_checksum(&buffer[..8], &src_ip, &dst_ip);
-            buffer[6] = (cksum >> 8) as u8;
-            buffer[7] = cksum as u8;
+            let cksum = tcp_udp_checksum(&buffer[..8], &src_ip, &dst_ip, 17);
+            buffer[6..8].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
