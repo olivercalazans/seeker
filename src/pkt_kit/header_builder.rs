@@ -1,10 +1,4 @@
 use std::net::Ipv4Addr;
-use pnet::packet::{
-    util::checksum,
-    ip::IpNextHeaderProtocol,
-    ipv4::{MutableIpv4Packet, checksum as ip_checksum},
-    icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
-};
 use crate::pkt_kit::checksum::*;
 
 
@@ -59,40 +53,40 @@ impl HeaderBuilder {
 
 
     pub fn create_icmp_header(
-            icmp_buffer: &mut [u8]
+            buffer: &mut [u8]
         ) {
-            let mut icmp_header = MutableEchoRequestPacket::new(icmp_buffer).unwrap();
-            icmp_header.set_icmp_type(IcmpTypes::EchoRequest);
-            icmp_header.set_icmp_code(IcmpCodes::NoCode);
-            icmp_header.set_identifier(0x1234);
-            icmp_header.set_sequence_number(1);
-            icmp_header.set_payload(&[]);
-            icmp_header.set_checksum(0);
+            buffer[0] = 8;
+            buffer[1] = 0;
+            buffer[2..4].copy_from_slice(&0u16.to_be_bytes());
+            buffer[4..6].copy_from_slice(&0x1234u16.to_be_bytes()); 
+            buffer[6..8].copy_from_slice(&1u16.to_be_bytes());
 
-            let checksum = checksum(&icmp_header.packet(), 1);
-            icmp_header.set_checksum(checksum);
+            let cksum = icmp_checksum(&buffer[..8]);
+            buffer[2..4].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
 
     pub fn create_ip_header(
-            ip_buffer: &mut [u8],
-            len:       u8,
-            protocol:  IpNextHeaderProtocol,
-            src_ip:    Ipv4Addr,
-            dst_ip:    Ipv4Addr
+            buffer:   &mut [u8],
+            len:      u8,
+            protocol: u8,
+            src_ip:   Ipv4Addr,
+            dst_ip:   Ipv4Addr
         ) {
-            let mut ip_header = MutableIpv4Packet::new(ip_buffer).unwrap();
-            ip_header.set_version(4);
-            ip_header.set_header_length(5);
-            ip_header.set_total_length(len.into());
-            ip_header.set_ttl(64);
-            ip_header.set_next_level_protocol(protocol);
-            ip_header.set_source(src_ip);
-            ip_header.set_destination(dst_ip);
+            buffer[0] = (4 << 4) | 5;
+            buffer[1] = 0;
+            buffer[2..4].copy_from_slice(&len.to_be_bytes());
+            buffer[4..6].copy_from_slice(&0x1234u16.to_be_bytes());
+            buffer[6..8].copy_from_slice(&0x4000u16.to_be_bytes());
+            buffer[8] = 64;
+            buffer[9] = protocol;
+            buffer[10..12].copy_from_slice(&0u16.to_be_bytes());
+            buffer[12..16].copy_from_slice(&src_ip.octets());
+            buffer[16..20].copy_from_slice(&dst_ip.octets());
 
-            let checksum = ip_checksum(&ip_header.to_immutable());
-            ip_header.set_checksum(checksum);
+            let cksum = ipv4_checksum(&buffer);
+            buffer[10..12].copy_from_slice(&cksum.to_be_bytes());
     }
 
 

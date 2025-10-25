@@ -32,3 +32,47 @@ pub fn tcp_udp_checksum(packet: &[u8], src_ip: &Ipv4Addr, dst_ip: &Ipv4Addr, pro
 
     !(sum as u16)
 }
+
+
+
+pub fn icmp_checksum(packet: &[u8]) -> u16 {
+    let mut sum = 0u32;
+    let mut i = 0;
+
+    while i + 1 < packet.len() {
+        sum += ((packet[i] as u32) << 8) | (packet[i + 1] as u32);
+        i += 2;
+    }
+
+    if i < packet.len() {
+        sum += (packet[i] as u32) << 8;
+    }
+
+    while (sum >> 16) != 0 {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    !(sum as u16)
+}
+
+
+
+pub fn ipv4_checksum(header: &[u8]) -> u16 {
+    let mut sum = 0u32;
+    let mut i = 0;
+
+    while i + 1 < header.len() {
+        sum += ((header[i] as u32) << 8) | (header[i + 1] as u32);
+        i += 2;
+    }
+
+    if i < header.len() {
+        sum += (header[i] as u32) << 8;
+    }
+
+    while (sum >> 16) != 0 {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    !(sum as u16)
+}
