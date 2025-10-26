@@ -76,5 +76,3 @@ pub fn source_ip_from_iface(dst: Ipv4Addr) -> Ipv4Addr {
         _ => abort("Expected a local IPv4 address, but got IPv6"),
     }
 }
-
-

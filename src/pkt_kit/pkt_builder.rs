@@ -69,7 +69,7 @@ impl PacketBuilder {
 
         self.pkt_buf.packet[..14].copy_from_slice(&self.pkt_buf.ether);
         self.pkt_buf.packet[14..34].copy_from_slice(&self.pkt_buf.ip);
-        self.pkt_buf.packet[34..42].copy_from_slice(&self.pkt_buf.layer4);
+        self.pkt_buf.packet[34..42].copy_from_slice(&self.pkt_buf.layer4[..8]);
         &self.pkt_buf.packet[..42]
     }
 
@@ -95,7 +95,7 @@ impl PacketBuilder {
         HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 17, self.src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
-        self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4);
+        self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
         &self.pkt_buf.packet[..28]
     }
 
@@ -106,7 +106,7 @@ impl PacketBuilder {
         HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 1, self.src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
-        self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4);
+        self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
         &self.pkt_buf.packet[..28]
     }
 

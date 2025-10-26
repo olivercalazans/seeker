@@ -16,7 +16,7 @@ impl HeaderBuilder {
             dst_ip:   Ipv4Addr,
             dst_port: u16
         ) {
-            buffer[0..2].copy_from_slice(&src_port.to_be_bytes());
+            buffer[..2].copy_from_slice(&src_port.to_be_bytes());
             buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
             buffer[4..8].copy_from_slice(&1u32.to_be_bytes());
             buffer[8..12].copy_from_slice(&0u32.to_be_bytes());
@@ -69,7 +69,7 @@ impl HeaderBuilder {
 
     pub fn create_ip_header(
             buffer:   &mut [u8],
-            len:      u8,
+            len:      u16,
             protocol: u8,
             src_ip:   Ipv4Addr,
             dst_ip:   Ipv4Addr

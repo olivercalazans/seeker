@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::arg_parser::FloodArgs;
-use crate::pkt_kit::{PacketBuilder, Layer2PacketSender};
+use crate::pkt_kit::{PacketBuilder, Layer2RawSocket};
 use crate::utils::{get_ipv4_net, inline_display};
 
 
@@ -45,26 +45,26 @@ impl PacketFlooder {
 
 
 
-    fn setup_tools(iface: String) -> (PacketBuilder, Layer2PacketSender) {
+    fn setup_tools(iface: String) -> (PacketBuilder, Layer2RawSocket) {
         let pkt_builder = PacketBuilder::new(iface.clone(), None);
-        let pkt_sender  = Layer2PacketSender::new(iface.clone());
+        let pkt_sender  = Layer2RawSocket::new(&iface);
         (pkt_builder, pkt_sender)
     }
 
 
 
     fn send_endlessly(&mut self) {
-        let (mut pkt_builder, mut pkt_sender) = Self::setup_tools(self.args.iface.clone());
+        let (mut pkt_builder, pkt_sender) = Self::setup_tools(self.args.iface.clone());
 
         loop {
             let src_ip = self.get_src_ip();
             let dst_ip = self.get_dst_ip();
             
             let tcp_pkt = pkt_builder.build_tcp_ether_pkt(src_ip, dst_ip);
-            pkt_sender.send_layer2_frame(tcp_pkt);
+            pkt_sender.send_to(tcp_pkt);
 
             let udp_pkt = pkt_builder.build_udp_ether_pkt(src_ip, dst_ip);
-            pkt_sender.send_layer2_frame(udp_pkt);
+            pkt_sender.send_to(udp_pkt);
             
             self.display_progress();
         }

@@ -2,7 +2,8 @@ use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{
-    PortGenerator, inline_display, get_host_name, DelayTimeGenerator, default_iface_name, source_ip_from_iface};
+    PortGenerator, inline_display, get_host_name, DelayTimeGenerator, default_iface_name, source_ip_from_iface
+};
 
 
 
