@@ -2,17 +2,8 @@ use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::ffi::CStr;
 use libc::{getifaddrs, freeifaddrs, ifaddrs, AF_INET, sockaddr_in};
 use ipnet::Ipv4Net;
-use netdev::interface::{get_default_interface, get_interfaces};
+use netdev::interface::get_interfaces;
 use crate::utils::abort;
-
-
-
-pub fn default_iface_name() -> String {
-    let iface_info = get_default_interface()
-        .expect("[ ERROR ] It wasn't possible to get the interface information");
-
-    iface_info.name
-}
 
 
 
@@ -92,4 +83,10 @@ pub fn iface_name_from_ip(dst_ip: Ipv4Addr) -> String {
         freeifaddrs(ifap);
         abort(&format!("[ERROR] Could not find any interface with IP {}", ip));
     }
+}
+
+
+
+pub fn default_iface_name() -> String {
+    iface_name_from_ip(Ipv4Addr::new(8, 8, 8, 8))
 }
