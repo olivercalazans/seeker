@@ -16,7 +16,7 @@ impl ProtocolTunneler {
     pub fn new(args: TunnelArgs) -> Self {
         Self {
             pkt_builder: PacketBuilder::new(args.iface.clone(), None),
-            pkt_sender:  Layer3RawSocket::new(),
+            pkt_sender:  Layer3RawSocket::new(&args.iface),
         }
     }
 

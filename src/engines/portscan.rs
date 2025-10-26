@@ -64,7 +64,7 @@ impl PortScanner {
         let iface           = default_iface_name();
         let src_ip          = source_ip_from_iface(self.args.target_ip.clone());
         let pkt_builder     = PacketBuilder::new(iface.clone(), Some(src_ip));
-        let pkt_sender      = Layer3RawSocket::new();
+        let pkt_sender      = Layer3RawSocket::new(&iface);
         let mut pkt_sniffer = PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string());
 
         pkt_sniffer.start_buffered_sniffer();
