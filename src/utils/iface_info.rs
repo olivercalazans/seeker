@@ -3,7 +3,6 @@ use std::ffi::CStr;
 use libc::{getifaddrs, freeifaddrs, ifaddrs, AF_INET, sockaddr_in};
 use ipnet::Ipv4Net;
 use netdev::interface::{get_default_interface, get_interfaces};
-use pnet::datalink::{self, MacAddr};
 use crate::utils::abort;
 
 
@@ -41,25 +40,6 @@ pub fn get_iface_cidr(iface_name: &String) -> String {
     let network_addr = iface_info.network();
     let cidr         = iface_info.prefix_len();
     format!("{}/{}", network_addr, cidr)
-}
-
-
-
-pub fn default_iface_mac(iface_name: &String) -> MacAddr {
-    let my_ip      = get_ipv4_addr(iface_name);
-    let interfaces = datalink::interfaces();
-
-    for iface in interfaces {
-        for ip_network in iface.ips {
-            if let std::net::IpAddr::V4(v4) = ip_network.ip() {
-                if v4 == my_ip {
-                    return iface.mac
-                        .expect("[ERROR] The default interface does not have a MAC address");
-                }
-            }
-        }
-    }
-    abort(format!("[ERROR] Could not find the default interface with IP {}", my_ip));
 }
 
 
