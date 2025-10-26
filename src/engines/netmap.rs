@@ -1,10 +1,10 @@
 use std::{thread, time::Duration, collections::HashMap, mem};
 use clap::Parser;
-use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
+use crate::iterators::{Ipv4Iter, DelayTimeGenerator};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
-use crate::utils::{inline_display, get_ipv4_net, get_host_name, DelayTimeGenerator};
+use crate::utils::{iface_network_cidr, inline_display, get_host_name};
 
 
 
@@ -59,10 +59,10 @@ impl NetworkMapper {
 
 
     fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
-        let (ip_range, total, delays) = self.get_data_for_loop();
+        let (ip_range, delays, total) = self.get_data_for_loop();
 
         println!("Sending ICMP probes");
-        for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
+        for (i, (ip, delay)) in ip_range.zip(delays.into_iter()).enumerate() {
             let pkt = pkt_builder.build_icmp_echo_req_pkt(ip);
             pkt_sender.send_to(pkt, ip);
             
@@ -75,10 +75,10 @@ impl NetworkMapper {
 
 
     fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
-        let (ip_range, total, delays) = self.get_data_for_loop();
+        let (ip_range, delays, total) = self.get_data_for_loop();
 
         println!("Sending TCP probes");
-        for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
+        for (i, (ip, delay)) in ip_range.zip(delays.into_iter()).enumerate() {
             let pkt = pkt_builder.build_tcp_ip_pkt(ip, 80);
             pkt_sender.send_to(pkt, ip);
             
@@ -90,17 +90,12 @@ impl NetworkMapper {
 
 
 
-    fn get_data_for_loop(&self) -> (Ipv4AddrRange, usize, Vec<f32>) {
-        let ip_range = self.get_ip_range();
-        let total    = ip_range.clone().count();
+    fn get_data_for_loop(&self) -> (Ipv4Iter, Vec<f32>, usize) {
+        let cidr     = iface_network_cidr(&self.args.iface);
+        let ip_range = Ipv4Iter::new(&cidr, None);
+        let total    = ip_range.total as usize;
         let delays   = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), total);
-        (ip_range, total, delays)
-    }
-
-
-
-    fn get_ip_range(&self) -> Ipv4AddrRange {
-        get_ipv4_net(&self.args.iface).hosts()
+        (ip_range, delays, total)
     }
 
 
