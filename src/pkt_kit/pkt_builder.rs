@@ -63,7 +63,7 @@ impl PacketBuilder {
         let src_mac  = self.random_mac();
         let dst_mac  = self.random_mac();
 
-        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, src_ip, src_port, dst_ip, 53, 8);
+        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, src_ip, src_port, dst_ip, 53, 0);
         HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 17, src_ip, dst_ip);
         HeaderBuilder::create_ether_header(&mut self.pkt_buf.ether, src_mac, dst_mac);
 
@@ -91,7 +91,7 @@ impl PacketBuilder {
     pub fn build_udp_ip_pkt(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
         let src_port = self.rng.gen_range(10000..=65535);
 
-        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, self.src_ip, src_port, dst_ip, dst_port, 8);
+        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, self.src_ip, src_port, dst_ip, dst_port, 0);
         HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 17, self.src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);

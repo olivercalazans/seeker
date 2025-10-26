@@ -39,14 +39,15 @@ impl HeaderBuilder {
             dst_ip:      Ipv4Addr,
             dst_port:    u16,
             len_payload: u16
-        ) {            
-            buffer[..2].copy_from_slice(&src_port.to_be_bytes());            
-            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
-            
+        ) {                
             let len = 8 + len_payload;
-            buffer[4..6].copy_from_slice(&len.to_be_bytes());
 
-            let cksum = tcp_udp_checksum(&buffer[..8], &src_ip, &dst_ip, 17);
+            buffer[..2].copy_from_slice(&src_port.to_be_bytes());
+            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
+            buffer[4..6].copy_from_slice(&len.to_be_bytes());
+            buffer[6..8].copy_from_slice(&0u16.to_be_bytes());
+
+            let cksum = tcp_udp_checksum(&buffer[..len as usize], &src_ip, &dst_ip, 17);
             buffer[6..8].copy_from_slice(&cksum.to_be_bytes());
     }
 
