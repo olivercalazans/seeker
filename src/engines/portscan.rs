@@ -2,7 +2,8 @@ use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{
-    PortGenerator, inline_display, get_host_name, DelayTimeGenerator, default_iface_name, source_ip_from_iface
+    PortGenerator, inline_display, get_host_name, DelayTimeGenerator,
+    source_ip_from_iface, iface_name_from_ip
 };
 
 
@@ -61,7 +62,7 @@ impl PortScanner {
 
 
     fn setup_tools(&self) -> (PacketBuilder, Layer3RawSocket, PacketSniffer) {
-        let iface           = default_iface_name();
+        let iface           = iface_name_from_ip(self.args.target_ip.clone());
         let src_ip          = source_ip_from_iface(self.args.target_ip.clone());
         let pkt_builder     = PacketBuilder::new(iface.clone(), Some(src_ip));
         let pkt_sender      = Layer3RawSocket::new(&iface);
