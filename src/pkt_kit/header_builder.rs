@@ -1,108 +1,105 @@
 use std::net::Ipv4Addr;
-use pnet::datalink::MacAddr;
-use pnet::packet::{
-    util::checksum, Packet,
-    ethernet::{EtherTypes, MutableEthernetPacket},
-    ip::IpNextHeaderProtocol,
-    ipv4::{MutableIpv4Packet, checksum as ip_checksum},
-    icmp::{IcmpTypes, echo_request::{MutableEchoRequestPacket, IcmpCodes}},
-    tcp::{MutableTcpPacket, TcpFlags, ipv4_checksum as tcp_checksum},
-    udp::{MutableUdpPacket, ipv4_checksum as udp_checksum},
-};
+use crate::pkt_kit::checksum::*;
 
 
 
 pub struct HeaderBuilder;
 
+
+
 impl HeaderBuilder { 
 
     pub fn create_tcp_header(
-            tcp_buffer: &mut [u8],
-            src_ip:     Ipv4Addr,
-            src_port:   u16, 
-            dst_ip:     Ipv4Addr,
-            dst_port:   u16
-        ) {  
-            let mut tcp_header = MutableTcpPacket::new(tcp_buffer).unwrap();
-            tcp_header.set_source(src_port);
-            tcp_header.set_destination(dst_port);
-            tcp_header.set_sequence(1);
-            tcp_header.set_flags(TcpFlags::SYN);
-            tcp_header.set_window(64240);
-            tcp_header.set_data_offset(5);
-            let pseudo_header_sum = tcp_checksum(&tcp_header.to_immutable(), &src_ip, &dst_ip);
-            tcp_header.set_checksum(pseudo_header_sum);
+            buffer:   &mut [u8],
+            src_ip:   Ipv4Addr,
+            src_port: u16, 
+            dst_ip:   Ipv4Addr,
+            dst_port: u16
+        ) {
+            buffer[..2].copy_from_slice(&src_port.to_be_bytes());
+            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
+            buffer[4..8].copy_from_slice(&1u32.to_be_bytes());
+            buffer[8..12].copy_from_slice(&0u32.to_be_bytes());
+            buffer[12] = 5 << 4;
+            buffer[13] = 0x02;
+            buffer[14..16].copy_from_slice(&64240u16.to_be_bytes());
+            buffer[16..18].copy_from_slice(&0u16.to_be_bytes());
+            buffer[18..20].copy_from_slice(&0u16.to_be_bytes());
+
+            let cksum = tcp_udp_checksum(&buffer, &src_ip, &dst_ip, 6);
+            buffer[16..18].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
 
     pub fn create_udp_header(
-            udp_buffer: &mut [u8],
-            src_ip:     Ipv4Addr,
-            src_port:   u16,
-            dst_ip:     Ipv4Addr,
-            dst_port:   u16,
-            len:        u16
-        ) {
-            let mut udp_header = MutableUdpPacket::new(udp_buffer).unwrap();
-            udp_header.set_source(src_port);
-            udp_header.set_destination(dst_port);
-            udp_header.set_length(len);
+            buffer:      &mut [u8],
+            src_ip:      Ipv4Addr,
+            src_port:    u16,
+            dst_ip:      Ipv4Addr,
+            dst_port:    u16,
+            len_payload: u16
+        ) {                
+            let len = 8 + len_payload;
 
-            let checksum = udp_checksum(&udp_header.to_immutable(), &src_ip, &dst_ip);
-            udp_header.set_checksum(checksum);
+            buffer[..2].copy_from_slice(&src_port.to_be_bytes());
+            buffer[2..4].copy_from_slice(&dst_port.to_be_bytes());
+            buffer[4..6].copy_from_slice(&len.to_be_bytes());
+            buffer[6..8].copy_from_slice(&0u16.to_be_bytes());
+
+            let cksum = tcp_udp_checksum(&buffer[..len as usize], &src_ip, &dst_ip, 17);
+            buffer[6..8].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
 
     pub fn create_icmp_header(
-            icmp_buffer: &mut [u8]
+            buffer: &mut [u8]
         ) {
-            let mut icmp_header = MutableEchoRequestPacket::new(icmp_buffer).unwrap();
-            icmp_header.set_icmp_type(IcmpTypes::EchoRequest);
-            icmp_header.set_icmp_code(IcmpCodes::NoCode);
-            icmp_header.set_identifier(0x1234);
-            icmp_header.set_sequence_number(1);
-            icmp_header.set_payload(&[]);
-            icmp_header.set_checksum(0);
+            buffer[0] = 8;
+            buffer[1] = 0;
+            buffer[2..4].copy_from_slice(&0u16.to_be_bytes());
+            buffer[4..6].copy_from_slice(&0x1234u16.to_be_bytes()); 
+            buffer[6..8].copy_from_slice(&1u16.to_be_bytes());
 
-            let checksum = checksum(&icmp_header.packet(), 1);
-            icmp_header.set_checksum(checksum);
+            let cksum = icmp_checksum(&buffer[..8]);
+            buffer[2..4].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
 
     pub fn create_ip_header(
-            ip_buffer: &mut [u8],
-            len:       u8,
-            protocol:  IpNextHeaderProtocol,
-            src_ip:    Ipv4Addr,
-            dst_ip:    Ipv4Addr
+            buffer:   &mut [u8],
+            len:      u16,
+            protocol: u8,
+            src_ip:   Ipv4Addr,
+            dst_ip:   Ipv4Addr
         ) {
-            let mut ip_header = MutableIpv4Packet::new(ip_buffer).unwrap();
-            ip_header.set_version(4);
-            ip_header.set_header_length(5);
-            ip_header.set_total_length(len.into());
-            ip_header.set_ttl(64);
-            ip_header.set_next_level_protocol(protocol);
-            ip_header.set_source(src_ip);
-            ip_header.set_destination(dst_ip);
+            buffer[0] = (4 << 4) | 5;
+            buffer[1] = 0;
+            buffer[2..4].copy_from_slice(&len.to_be_bytes());
+            buffer[4..6].copy_from_slice(&0x1234u16.to_be_bytes());
+            buffer[6..8].copy_from_slice(&0x4000u16.to_be_bytes());
+            buffer[8] = 64;
+            buffer[9] = protocol;
+            buffer[10..12].copy_from_slice(&0u16.to_be_bytes());
+            buffer[12..16].copy_from_slice(&src_ip.octets());
+            buffer[16..20].copy_from_slice(&dst_ip.octets());
 
-            let checksum = ip_checksum(&ip_header.to_immutable());
-            ip_header.set_checksum(checksum);
+            let cksum = ipv4_checksum(&buffer);
+            buffer[10..12].copy_from_slice(&cksum.to_be_bytes());
     }
 
 
 
     pub fn create_ether_header(
-            ether_buffer: &mut [u8],
-            src_mac:      MacAddr,
-            dst_mac:      MacAddr
+            buffer:  &mut [u8],
+            src_mac: [u8; 6],
+            dst_mac: [u8; 6]
         ) {
-            let mut eth_header = MutableEthernetPacket::new(ether_buffer).unwrap();
-            eth_header.set_source(src_mac);
-            eth_header.set_destination(dst_mac);
-            eth_header.set_ethertype(EtherTypes::Ipv4);
+        buffer[0..6].copy_from_slice(&dst_mac);
+        buffer[6..12].copy_from_slice(&src_mac);
+        buffer[12..14].copy_from_slice(&0x0800u16.to_be_bytes());
     }
 
 }
