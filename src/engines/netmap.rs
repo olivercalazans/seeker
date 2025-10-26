@@ -3,7 +3,7 @@ use clap::Parser;
 use ipnet::Ipv4AddrRange;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
-use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{inline_display, get_ipv4_net, get_host_name, DelayTimeGenerator};
 
 
@@ -47,9 +47,9 @@ impl NetworkMapper {
 
 
 
-    fn setup_tools(&self) -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
+    fn setup_tools(&self) -> (PacketBuilder, Layer3RawSocket, PacketSniffer) {
         let pkt_builder     = PacketBuilder::new(self.args.iface.clone(), None);
-        let pkt_sender      = Layer3PacketSender::new();
+        let pkt_sender      = Layer3RawSocket::new();
         let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), self.args.iface.clone(), "".to_string());
 
         pkt_sniffer.start_buffered_sniffer();
@@ -58,13 +58,13 @@ impl NetworkMapper {
 
 
 
-    fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         println!("Sending ICMP probes");
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
-            let icmp_pkt = pkt_builder.build_icmp_echo_req_pkt(ip);
-            pkt_sender.send_layer3_icmp(icmp_pkt, ip);
+            let pkt = pkt_builder.build_icmp_echo_req_pkt(ip);
+            pkt_sender.send_to(pkt, ip);
             
             Self::display_progress(i+1, total, ip.to_string(), delay);
             thread::sleep(Duration::from_secs_f32(delay));
@@ -74,13 +74,13 @@ impl NetworkMapper {
 
 
 
-    fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
         let (ip_range, total, delays) = self.get_data_for_loop();
 
         println!("Sending TCP probes");
         for (i, (ip, delay)) in ip_range.into_iter().zip(delays.into_iter()).enumerate() {
-            let tcp_pkt = pkt_builder.build_tcp_ip_pkt(ip, 80);
-            pkt_sender.send_layer3_tcp(tcp_pkt, ip);
+            let pkt = pkt_builder.build_tcp_ip_pkt(ip, 80);
+            pkt_sender.send_to(pkt, ip);
             
             Self::display_progress(i+1, total, ip.to_string(), delay);
             thread::sleep(Duration::from_secs_f32(delay));

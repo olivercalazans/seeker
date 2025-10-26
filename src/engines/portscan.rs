@@ -1,6 +1,6 @@
 use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
-use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3PacketSender, PacketSniffer};
+use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{
     PortGenerator, inline_display, get_host_name, DelayTimeGenerator, default_iface_name, source_ip_from_iface};
 
@@ -59,11 +59,11 @@ impl PortScanner {
 
 
 
-    fn setup_tools(&self) -> (PacketBuilder, Layer3PacketSender, PacketSniffer) {
+    fn setup_tools(&self) -> (PacketBuilder, Layer3RawSocket, PacketSniffer) {
         let iface           = default_iface_name();
         let src_ip          = source_ip_from_iface(self.args.target_ip.clone());
         let pkt_builder     = PacketBuilder::new(iface.clone(), Some(src_ip));
-        let pkt_sender      = Layer3PacketSender::new();
+        let pkt_sender      = Layer3RawSocket::new();
         let mut pkt_sniffer = PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string());
 
         pkt_sniffer.start_buffered_sniffer();
@@ -80,14 +80,14 @@ impl PortScanner {
 
 
 
-    fn send_probes(&mut self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3PacketSender) {
+    fn send_probes(&mut self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
         let (ip, delays) = self.get_data_for_loop();
         let ports        = mem::take(&mut self.ports);
 
         for (port, delay) in ports.into_iter().zip(delays.into_iter())  {
 
-            let tcp_pkt = pkt_builder.build_tcp_ip_pkt(self.args.target_ip, port);
-            pkt_sender.send_layer3_tcp(tcp_pkt, self.args.target_ip);
+            let pkt = pkt_builder.build_tcp_ip_pkt(self.args.target_ip, port);
+            pkt_sender.send_to(pkt, self.args.target_ip);
 
             Self::display_progress(ip.clone(), port, delay);
             thread::sleep(Duration::from_secs_f32(delay));
