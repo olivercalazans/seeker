@@ -1,4 +1,4 @@
-use etherparse::{SlicedPacket, InternetSlice};
+use etherparse::{SlicedPacket};
 
 
 
@@ -26,16 +26,19 @@ impl PacketDissector {
 
 
     pub fn get_src_ip(packet: &[u8]) -> String {
-        Self::get_headers(packet)
-            .and_then(|sliced| match sliced.net {
-                Some(InternetSlice::Ipv4(ipv4)) => {
-                    let [a, b, c, d] = ipv4.header().source();
-                    Some(format!("{}.{}.{}.{}", a, b, c, d))
-                }
-                _ => None,
-            })
-            .unwrap_or_else(|| "unknown".to_string())
+        if packet.len() < 30 {
+            return "unknown".into();
+        }
+
+        let ethertype = u16::from_be_bytes([packet[12], packet[13]]);
+        if ethertype != 0x0800 {
+            return "unknown".into();
+        }
+
+        let src = &packet[26..30];
+        format!("{}.{}.{}.{}", src[0], src[1], src[2], src[3])
     }
+
 
 
 
