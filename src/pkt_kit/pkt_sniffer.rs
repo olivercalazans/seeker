@@ -1,6 +1,6 @@
 use std::{thread, time::Duration, sync::{Arc, Mutex}, sync::atomic::{AtomicBool, Ordering}};
 use pcap::{Device, Capture};
-use crate::utils::{get_ipv4_addr, get_iface_cidr};
+use crate::utils::{iface_ip, iface_network_cidr};
 
 
 
@@ -76,10 +76,10 @@ impl PacketSniffer {
 
 
     fn get_bpf_filter_parameters(&self) -> String {
-        let my_ip = get_ipv4_addr(&self.iface);
+        let my_ip = iface_ip(&self.iface);
 
         match self.command.as_str() {
-            "netmap"    => format!("(dst host {} and src net {}) and (tcp or (icmp and icmp[0] = 0))", my_ip, get_iface_cidr(&self.iface)),
+            "netmap"    => format!("(dst host {} and src net {}) and (tcp or (icmp and icmp[0] = 0))", my_ip, iface_network_cidr(&self.iface)),
             "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
             "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
             _           => panic!("[ ERROR ] Unknown filter: {}", self.command),

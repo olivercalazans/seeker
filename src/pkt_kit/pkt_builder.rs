@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::pkt_kit::{PacketBuffer, HeaderBuilder};
-use crate::utils::get_ipv4_addr;
+use crate::utils::iface_ip;
 
 
 
@@ -18,7 +18,7 @@ impl PacketBuilder {
     pub fn new(iface: String, src_ip: Option<Ipv4Addr>) -> Self {
         Self {
             pkt_buf: PacketBuffer::default(),
-            src_ip:  src_ip.unwrap_or_else(|| get_ipv4_addr(&iface)),
+            src_ip:  src_ip.unwrap_or_else(|| iface_ip(&iface)),
             rng:     rand::thread_rng(),
         }
     }

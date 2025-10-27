@@ -1,8 +1,9 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::arg_parser::FloodArgs;
+use crate::iterators::Ipv4Iter;
 use crate::pkt_kit::{PacketBuilder, Layer2RawSocket};
-use crate::utils::{get_ipv4_net, inline_display};
+use crate::utils::{iface_network_cidr, inline_display};
 
 
 
@@ -38,9 +39,12 @@ impl PacketFlooder {
 
 
     fn set_ip_range(&mut self) {
-        let net    = get_ipv4_net(&self.args.iface);
-        self.start = net.network().into();
-        self.end   = net.broadcast().into();
+        let cidr         = iface_network_cidr(&self.args.iface);
+        let mut ip_range = Ipv4Iter::new(&cidr, None);
+        let first_ip     = ip_range.next().expect("No IPs in range");
+        let last_ip      = Ipv4Addr::from(u32::from(first_ip) + ip_range.total as u32 - 3);
+        self.start       = first_ip.into();
+        self.end         = last_ip.into();
     }
 
 
