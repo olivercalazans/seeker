@@ -9,12 +9,14 @@ pub struct Ipv4Iter {
     include_network:   bool,
     include_broadcast: bool,
     pub total:         u64,
+    start:             u32,
+    limit:             u64,
 }
 
 
 
 impl Ipv4Iter {
-
+    
     pub fn new(cidr: &str, max_addrs: Option<u64>) -> Self {
         Self::with_flags(cidr, false, false, max_addrs)
     }
@@ -51,12 +53,15 @@ impl Ipv4Iter {
         };
 
         let total_u64 = total as u64;
-        let limit = max_addrs.unwrap_or(total_u64);
+        let limit     = max_addrs.unwrap_or(total_u64);
         if limit > total_u64 {
-            abort(&format!("max_addrs ({}) exceeds total addresses ({}) in CIDR {}", limit, total_u64, cidr));
+            abort(&format!(
+                "max_addrs ({}) exceeds total addresses ({}) in CIDR {}",
+                limit, total_u64, cidr
+            ));
         }
 
-        let ip_u32 = u32::from_be_bytes(ip.octets());
+        let ip_u32   = u32::from_be_bytes(ip.octets());
         let mask_u32 = if prefix == 0 {
             0u32
         } else {
@@ -70,7 +75,16 @@ impl Ipv4Iter {
             include_network,
             include_broadcast,
             total: limit,
+            start: network_u32,
+            limit,
         }
+    }
+
+
+
+    pub fn reset(&mut self) {
+        self.next = self.start;
+        self.remaining = self.limit;
     }
 
 }
@@ -78,20 +92,22 @@ impl Ipv4Iter {
 
 
 impl Iterator for Ipv4Iter {
-
+    
     type Item = Ipv4Addr;
-
+    
     fn next(&mut self) -> Option<Ipv4Addr> {
         while self.remaining > 0 {
-            let index        = (self.total - self.remaining) as u64;
-            let is_network   = index == 0;
+            let index = (self.total - self.remaining) as u64;
+            let is_network = index == 0;
             let is_broadcast = index == (self.total - 1);
 
             self.remaining -= 1;
-            let cur   = self.next;
+            let cur = self.next;
             self.next = self.next.wrapping_add(1);
 
-            if (!self.include_network && is_network) || (!self.include_broadcast && is_broadcast) {
+            if (!self.include_network && is_network)
+                || (!self.include_broadcast && is_broadcast)
+            {
                 continue;
             }
 
