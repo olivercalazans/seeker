@@ -1,21 +1,7 @@
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::ffi::CStr;
 use libc::{getifaddrs, freeifaddrs, ifaddrs, AF_INET, sockaddr_in};
-use ipnet::Ipv4Net;
-use netdev::interface::get_interfaces;
 use crate::utils::abort;
-
-
-
-pub fn get_ipv4_net(iface_name: &String) -> Ipv4Net {
-    let iface = get_interfaces()
-        .into_iter()
-        .find(|i| i.name == *iface_name)
-        .unwrap_or_else(|| abort(&format!("Interface '{}' not found", iface_name)));
-
-    *iface.ipv4.first()
-        .unwrap_or_else(|| abort(format!("Interface '{}' has no IPv4 address", iface_name)))
-}
 
 
 

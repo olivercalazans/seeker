@@ -16,8 +16,6 @@ strip = "symbols"
 clap = { version = "4.5", features = ["derive"] }
 pcap = "2.3.0"
 libc = "0.2.177"
-ipnet = "2.11.0"
-netdev = "0.37"
 rand = "0.8.5"
 etherparse = "0.19.0"
 dns-lookup = "3.0.0"
