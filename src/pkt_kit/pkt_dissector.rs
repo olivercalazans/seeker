@@ -1,38 +1,47 @@
-use etherparse::{SlicedPacket};
-
-
-
 pub struct PacketDissector;
 
 
 
 impl PacketDissector {
 
-    fn get_headers(packet: &[u8]) -> Option<SlicedPacket<'_>> {
-        SlicedPacket::from_ethernet(packet).ok()
-    }
+    pub fn get_src_tcp_port(packet: &[u8]) -> String {
+        if packet.len() < 38 {
+            return "small packet".into();
+        }
 
+        if u16::from_be_bytes([packet[12], packet[13]]) != 0x0800 {
+            return "not ipv4".into();
+        }
 
+        let ihl = packet[14] & 0x0f;
+        if ihl < 5 {
+            return "invalid ip".into();
+        }
+        let ip_header_len    = (ihl as usize) * 4;
+        let ip_payload_start = 14 + ip_header_len;
 
-    pub fn get_tcp_src_port(packet: &[u8]) -> String {
-        Self::get_headers(packet)
-            .and_then(|sliced| match sliced.transport {
-                Some(etherparse::TransportSlice::Tcp(tcp)) => Some(tcp.source_port().to_string()),
-                _ => None,
-            })
-            .unwrap_or_else(|| "unknown".to_string())
+        if packet[23] != 6 {
+            return "not tcp".into();
+        }
+
+        if packet.len() < ip_payload_start + 2 {
+            return "unknown".into();
+        }
+
+        let port = u16::from_be_bytes([packet[ip_payload_start], packet[ip_payload_start + 1]]);
+        port.to_string()
     }
 
 
 
     pub fn get_src_ip(packet: &[u8]) -> String {
         if packet.len() < 30 {
-            return "unknown".into();
+            return "small packet".into();
         }
 
         let ethertype = u16::from_be_bytes([packet[12], packet[13]]);
         if ethertype != 0x0800 {
-            return "unknown".into();
+            return "not ipv4".into();
         }
 
         let src = &packet[26..30];
@@ -41,10 +50,9 @@ impl PacketDissector {
 
 
 
-
     pub fn get_src_mac(packet: &[u8]) -> String {
         if packet.len() < 12 {
-            return "unknown".into();
+            return "small packet".into();
         }
 
         packet[6..12]
