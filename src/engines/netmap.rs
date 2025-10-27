@@ -2,9 +2,25 @@ use std::{thread, time::Duration, collections::HashMap, mem};
 use clap::Parser;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
-use crate::iterators::{Ipv4Iter, DelayTimeGenerator};
+use crate::iterators::{Ipv4Iter, DelayIter};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
-use crate::utils::{iface_network_cidr, inline_display, get_host_name};
+use crate::utils::{abort, iface_network_cidr, inline_display, get_host_name};
+
+
+
+struct PacketTools {
+    sniffer: PacketSniffer,
+    builder: PacketBuilder,
+    socket:  Layer3RawSocket,
+}
+
+
+
+struct Iterators {
+    ips:    Ipv4Iter,
+    delays: DelayIter,
+    len:    usize,
+}
 
 
 
@@ -37,65 +53,60 @@ impl NetworkMapper {
 
 
     fn send_and_receive(&mut self) {
-        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
+        let mut pkt_tools = self.setup_tools();
+        let mut iters     = self.setup_iterators();
         
-        self.send_icmp_probes(&mut pkt_builder, &mut pkt_sender);
-        self.send_tcp_probes(&mut pkt_builder, &mut pkt_sender);
+        pkt_tools.sniffer.start_buffered_sniffer();
         
-        self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
-    }
-
-
-
-    fn setup_tools(&self) -> (PacketBuilder, Layer3RawSocket, PacketSniffer) {
-        let pkt_builder     = PacketBuilder::new(self.args.iface.clone(), None);
-        let pkt_sender      = Layer3RawSocket::new(&self.args.iface);
-        let mut pkt_sniffer = PacketSniffer::new("netmap".to_string(), self.args.iface.clone(), "".to_string());
-
-        pkt_sniffer.start_buffered_sniffer();
-        (pkt_builder, pkt_sender, pkt_sniffer)
-    }
-
-
-
-    fn send_icmp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
-        let (ip_range, delays, total) = self.get_data_for_loop();
-
         println!("Sending ICMP probes");
-        for (i, (ip, delay)) in ip_range.zip(delays.into_iter()).enumerate() {
-            let pkt = pkt_builder.build_icmp_echo_req_pkt(ip);
-            pkt_sender.send_to(pkt, ip);
-            
-            Self::display_progress(i+1, total, ip.to_string(), delay);
-            thread::sleep(Duration::from_secs_f32(delay));
-        }
-        println!("");
-    }
-
-
-
-    fn send_tcp_probes(&self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
-        let (ip_range, delays, total) = self.get_data_for_loop();
+        self.send_probes("icmp", &mut pkt_tools, &mut iters);
+        
+        iters.ips.reset();
+        iters.delays.reset();
 
         println!("Sending TCP probes");
-        for (i, (ip, delay)) in ip_range.zip(delays.into_iter()).enumerate() {
-            let pkt = pkt_builder.build_tcp_ip_pkt(ip, 80);
-            pkt_sender.send_to(pkt, ip);
-            
-            Self::display_progress(i+1, total, ip.to_string(), delay);
-            thread::sleep(Duration::from_secs_f32(delay));
-        }
-        println!("");
+        self.send_probes("tcp", &mut pkt_tools, &mut iters);        
+        
+        Self::finish_tools(&mut pkt_tools);
+        self.raw_packets = pkt_tools.sniffer.get_packets()
     }
 
 
 
-    fn get_data_for_loop(&self) -> (Ipv4Iter, Vec<f32>, usize) {
-        let cidr     = iface_network_cidr(&self.args.iface);
-        let ip_range = Ipv4Iter::new(&cidr, None);
-        let total    = ip_range.total as usize;
-        let delays   = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), total);
-        (ip_range, delays, total)
+    fn setup_tools(&self) -> PacketTools {
+        PacketTools {
+            sniffer: PacketSniffer::new("netmap".to_string(), self.args.iface.clone(), "".to_string()),
+            builder: PacketBuilder::new(self.args.iface.clone(), None),
+            socket:  Layer3RawSocket::new(&self.args.iface),
+        }
+    }
+
+
+
+    fn setup_iterators(&self) -> Iterators {
+        let cidr   = iface_network_cidr(&self.args.iface);
+        let ips    = Ipv4Iter::new(&cidr, None);
+        let len    = ips.total as usize;
+        let delays = DelayIter::new(&self.args.delay, len);
+        
+        Iterators {ips, delays, len}
+    }
+
+
+
+    fn send_probes(&self, probe_type: &str, pkt_tools: &mut PacketTools, iters: &mut Iterators) {
+        for (i, (ip, delay)) in iters.ips.by_ref().zip(iters.delays.by_ref()).enumerate() {
+            let pkt = match probe_type {
+                "icmp" => pkt_tools.builder.build_icmp_echo_req_pkt(ip),
+                "tcp"  => pkt_tools.builder.build_tcp_ip_pkt(ip, 80),
+                &_     => abort(format!("Unknown protocol type: {}", probe_type)),
+            };
+            pkt_tools.socket.send_to(&pkt, ip);
+
+            Self::display_progress(i + 1, iters.len - 2 , ip.to_string(), delay);
+            thread::sleep(Duration::from_secs_f32(delay));
+        }
+        println!("");
     }
 
 
@@ -107,10 +118,9 @@ impl NetworkMapper {
 
 
     
-    fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
+    fn finish_tools(pkt_tools: &mut PacketTools){
         thread::sleep(Duration::from_secs(3));
-        pkt_sniffer.stop();
-        pkt_sniffer.get_packets()
+        pkt_tools.sniffer.stop();
     }
 
 

@@ -1,8 +1,24 @@
 use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
-use crate::iterators::{DelayTimeGenerator, PortIter};
+use crate::iterators::{DelayIter, PortIter};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{inline_display, get_host_name, iface_name_from_ip, iface_ip};
+
+
+
+struct PacketTools {
+    sniffer: PacketSniffer,
+    builder: PacketBuilder,
+    socket:  Layer3RawSocket,
+}
+
+
+
+struct Iterators {
+    ports:  PortIter,
+    delays: DelayIter,
+    ip:     String,
+}
 
 
 
@@ -43,24 +59,36 @@ impl PortScanner {
 
 
     fn send_and_receive(&mut self) {
-        let (mut pkt_builder, mut pkt_sender, mut pkt_sniffer) = self.setup_tools();
-        self.send_probes(&mut pkt_builder, &mut pkt_sender);
-        self.raw_packets = Self::finish_tools(&mut pkt_sniffer);
+        let mut pkt_tools = self.setup_tools();
+        let mut iters     = self.setup_iterators();
+
+        pkt_tools.sniffer.start_buffered_sniffer();
+        self.send_probes(&mut pkt_tools, &mut iters);
+        Self::finish_tools(&mut pkt_tools);
+        
+        self.raw_packets = pkt_tools.sniffer.get_packets();
     }
 
 
 
-    fn setup_tools(&self) -> (PacketBuilder, Layer3RawSocket, PacketSniffer) {
-        let iface           = iface_name_from_ip(self.args.target_ip.clone());
-        let src_ip          = iface_ip(&iface);
-        let pkt_builder     = PacketBuilder::new(iface.clone(), Some(src_ip));
-        let pkt_sender      = Layer3RawSocket::new(&iface);
-        let mut pkt_sniffer = PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string());
+    fn setup_tools(&self) -> PacketTools {
+        let iface  = iface_name_from_ip(self.args.target_ip.clone());
+        let src_ip = iface_ip(&iface);
 
-        pkt_sniffer.start_buffered_sniffer();
-        thread::sleep(Duration::from_secs_f32(0.5));
-        
-        (pkt_builder, pkt_sender, pkt_sniffer)
+        PacketTools {
+            sniffer: PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string()),
+            builder: PacketBuilder::new(iface.clone(), Some(src_ip)),
+            socket:  Layer3RawSocket::new(&iface),
+        }
+    }
+
+
+
+    fn setup_iterators(&self) -> Iterators {
+        let ports  = PortIter::new(&self.args.ports, self.args.random.clone());
+        let delays = DelayIter::new(&self.args.delay, ports.len());
+        let ip     = self.args.target_ip.to_string();
+        Iterators {ports, delays, ip}
     }
 
 
@@ -71,27 +99,16 @@ impl PortScanner {
 
 
 
-    fn send_probes(&mut self, pkt_builder: &mut PacketBuilder, pkt_sender: &mut Layer3RawSocket) {
-        let (ports, delays, ip) = self.get_data_for_loop();
+    fn send_probes(&mut self, pkt_tools: &mut PacketTools, iters: &mut Iterators) {
+        for (port, delay) in iters.ports.by_ref().zip(iters.delays.by_ref())  {
 
-        for (port, delay) in ports.zip(delays.into_iter())  {
+            let pkt = pkt_tools.builder.build_tcp_ip_pkt(self.args.target_ip, port);
+            pkt_tools.socket.send_to(pkt, self.args.target_ip);
 
-            let pkt = pkt_builder.build_tcp_ip_pkt(self.args.target_ip, port);
-            pkt_sender.send_to(pkt, self.args.target_ip);
-
-            Self::display_progress(&ip, port, delay);
+            Self::display_progress(&iters.ip, port, delay);
             thread::sleep(Duration::from_secs_f32(delay));
         }
         println!("");
-    }
-
-
-
-    fn get_data_for_loop(&self) -> (PortIter, Vec<f32>, String) {
-        let ports  = PortIter::new(&self.args.ports, self.args.random.clone());
-        let delays = DelayTimeGenerator::get_delay_list(self.args.delay.clone(), ports.len());
-        let ip     = self.args.target_ip.to_string();
-        (ports, delays, ip)
     }
 
 
@@ -103,10 +120,9 @@ impl PortScanner {
 
 
 
-    fn finish_tools(pkt_sniffer: &mut PacketSniffer) -> Vec<Vec<u8>> {
+    fn finish_tools(pkt_tools: &mut PacketTools) {
         thread::sleep(Duration::from_secs(3));
-        pkt_sniffer.stop();
-        pkt_sniffer.get_packets()
+        pkt_tools.sniffer.stop();
     }
 
 

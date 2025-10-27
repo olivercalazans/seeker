@@ -1,5 +1,5 @@
-pub mod delay_generator;
-pub use delay_generator::DelayTimeGenerator;
+pub mod delay_iter;
+pub use delay_iter::DelayIter;
 
 pub mod ipv4_iter;
 pub use ipv4_iter::Ipv4Iter;
