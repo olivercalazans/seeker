@@ -24,9 +24,10 @@ struct Iterators {
 
 pub struct PortScanner {
     args:        PortScanArgs,
+    iface:       String,
     return_data: bool,
     raw_packets: Vec<Vec<u8>>,
-    open_ports:  Vec<String>
+    open_ports:  Vec<String>,
 }
 
 
@@ -35,10 +36,11 @@ impl PortScanner {
 
     pub fn new(args: PortScanArgs, return_data: bool) -> Self {
         Self {
-            args,
-            return_data,
+            iface:       iface_name_from_ip(args.target_ip.clone()),
             raw_packets: Vec::new(),
             open_ports:  Vec::new(),
+            args,
+            return_data,
         }
     }
 
@@ -72,13 +74,10 @@ impl PortScanner {
 
 
     fn setup_tools(&self) -> PacketTools {
-        let iface  = iface_name_from_ip(self.args.target_ip.clone());
-        let src_ip = iface_ip(&iface);
-
         PacketTools {
-            sniffer: PacketSniffer::new(self.filter(), iface.clone(), self.args.target_ip.to_string()),
-            builder: PacketBuilder::new(iface.clone(), Some(src_ip)),
-            socket:  Layer3RawSocket::new(&iface),
+            sniffer: PacketSniffer::new(self.filter(), self.iface.clone(), self.args.target_ip.to_string()),
+            builder: PacketBuilder::new(),
+            socket:  Layer3RawSocket::new(&self.iface),
         }
     }
 
@@ -100,9 +99,11 @@ impl PortScanner {
 
 
     fn send_probes(&mut self, pkt_tools: &mut PacketTools, iters: &mut Iterators) {
+        let src_ip = iface_ip(&self.iface);
+
         for (port, delay) in iters.ports.by_ref().zip(iters.delays.by_ref())  {
 
-            let pkt = pkt_tools.builder.build_tcp_ip_pkt(self.args.target_ip, port);
+            let pkt = pkt_tools.builder.build_tcp_ip_pkt(src_ip, self.args.target_ip, port);
             pkt_tools.socket.send_to(pkt, self.args.target_ip);
 
             Self::display_progress(&iters.ip, port, delay);

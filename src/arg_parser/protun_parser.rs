@@ -1,4 +1,5 @@
-pub use clap::Parser;
+use std::net::Ipv4Addr;
+use clap::Parser;
 use crate::utils::default_iface_name;
 
 
@@ -10,4 +11,12 @@ pub struct TunnelArgs {
     #[arg(short, long, default_value_t = default_iface_name())]
     pub iface: String,
 
+
+    #[arg(short, long)]
+    pub src_ip: Option<Ipv4Addr>,
+
+
+    #[arg(short, long)]
+    pub src_mac: Option<Ipv4Addr>,
+    
 }

@@ -49,8 +49,8 @@ impl PacketFlooder {
 
 
 
-    fn setup_tools(iface: String) -> (PacketBuilder, Layer2RawSocket) {
-        let pkt_builder = PacketBuilder::new(iface.clone(), None);
+    fn setup_tools(iface: &str) -> (PacketBuilder, Layer2RawSocket) {
+        let pkt_builder = PacketBuilder::new();
         let pkt_sender  = Layer2RawSocket::new(&iface);
         (pkt_builder, pkt_sender)
     }
@@ -58,7 +58,7 @@ impl PacketFlooder {
 
 
     fn send_endlessly(&mut self) {
-        let (mut pkt_builder, pkt_sender) = Self::setup_tools(self.args.iface.clone());
+        let (mut pkt_builder, pkt_sender) = Self::setup_tools(&self.args.iface);
 
         loop {
             let src_ip = self.get_src_ip();

@@ -1,13 +1,11 @@
 use std::net::Ipv4Addr;
 use rand::{Rng, rngs::ThreadRng};
 use crate::pkt_kit::{PacketBuffer, HeaderBuilder};
-use crate::utils::iface_ip;
 
 
 
 pub struct PacketBuilder {
     pkt_buf: PacketBuffer,
-    src_ip:  Ipv4Addr,
     rng:     ThreadRng,
 }
 
@@ -15,23 +13,27 @@ pub struct PacketBuilder {
 
 impl PacketBuilder {
 
-    pub fn new(iface: String, src_ip: Option<Ipv4Addr>) -> Self {
+    pub fn new() -> Self {
         Self {
             pkt_buf: PacketBuffer::default(),
-            src_ip:  src_ip.unwrap_or_else(|| iface_ip(&iface)),
             rng:     rand::thread_rng(),
         }
     }
 
 
 
-    pub fn build_tcp_over_udp_pkt(&mut self, dst_ip: Ipv4Addr) -> &[u8] {
+    pub fn build_tcp_over_udp_pkt(
+        &mut self,
+        src_ip: Ipv4Addr,
+        dst_ip: Ipv4Addr
+        ) -> &[u8]
+    {
         let src_port       = self.rng.gen_range(10000..=65535);
         let mut tcp_buffer = [0u8; 27];
         
-        HeaderBuilder::create_tcp_header(&mut tcp_buffer, self.src_ip, src_port, dst_ip, 80);
-        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, self.src_ip, src_port, dst_ip, 53, 35);
-        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 40, 17, self.src_ip, dst_ip);
+        HeaderBuilder::create_tcp_header(&mut tcp_buffer, src_ip, src_port, dst_ip, 80);
+        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, src_ip, src_port, dst_ip, 53, 35);
+        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 40, 17, src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
         self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
@@ -41,7 +43,12 @@ impl PacketBuilder {
 
 
 
-    pub fn build_tcp_ether_pkt(&mut self, src_ip: Ipv4Addr, dst_ip: Ipv4Addr) -> &[u8] {
+    pub fn build_tcp_ether_pkt(
+        &mut self,
+        src_ip: Ipv4Addr,
+        dst_ip: Ipv4Addr
+        ) -> &[u8]
+    {
         let src_port = self.rng.gen_range(10000..=65535);
         let src_mac  = self.random_mac();
         let dst_mac  = self.random_mac();
@@ -58,7 +65,12 @@ impl PacketBuilder {
 
 
 
-    pub fn build_udp_ether_pkt(&mut self, src_ip: Ipv4Addr, dst_ip: Ipv4Addr) -> &[u8] {
+    pub fn build_udp_ether_pkt(
+        &mut self,
+        src_ip: Ipv4Addr,
+        dst_ip: Ipv4Addr
+        ) -> &[u8]
+    {
         let src_port = self.rng.gen_range(10000..=65535);
         let src_mac  = self.random_mac();
         let dst_mac  = self.random_mac();
@@ -75,11 +87,17 @@ impl PacketBuilder {
 
 
 
-    pub fn build_tcp_ip_pkt(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
+    pub fn build_tcp_ip_pkt(
+        &mut self,
+        src_ip: Ipv4Addr,
+        dst_ip: Ipv4Addr,
+        dst_port: u16
+        ) -> &[u8]
+    {
         let src_port = self.rng.gen_range(10000..=65535);
 
-        HeaderBuilder::create_tcp_header(&mut self.pkt_buf.layer4, self.src_ip, src_port, dst_ip, dst_port);
-        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 40, 6, self.src_ip, dst_ip);
+        HeaderBuilder::create_tcp_header(&mut self.pkt_buf.layer4, src_ip, src_port, dst_ip, dst_port);
+        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 40, 6, src_ip, dst_ip);
         
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
         self.pkt_buf.packet[20..40].copy_from_slice(&self.pkt_buf.layer4);
@@ -88,11 +106,17 @@ impl PacketBuilder {
 
 
 
-    pub fn build_udp_ip_pkt(&mut self, dst_ip: Ipv4Addr, dst_port: u16) -> &[u8] {
+    pub fn build_udp_ip_pkt(
+        &mut self,
+        src_ip:   Ipv4Addr,
+        dst_ip:   Ipv4Addr,
+        dst_port: u16
+        ) -> &[u8]
+    {
         let src_port = self.rng.gen_range(10000..=65535);
 
-        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, self.src_ip, src_port, dst_ip, dst_port, 0);
-        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 17, self.src_ip, dst_ip);
+        HeaderBuilder::create_udp_header(&mut self.pkt_buf.layer4, src_ip, src_port, dst_ip, dst_port, 0);
+        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 17, src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
         self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
@@ -101,9 +125,14 @@ impl PacketBuilder {
 
 
 
-    pub fn build_icmp_echo_req_pkt(&mut self, dst_ip: Ipv4Addr) -> &[u8] {
+    pub fn build_icmp_echo_req_pkt(
+        &mut self,
+        src_ip: Ipv4Addr,
+        dst_ip: Ipv4Addr
+        ) -> &[u8]
+    {
         HeaderBuilder::create_icmp_header(&mut self.pkt_buf.layer4);
-        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 1, self.src_ip, dst_ip);
+        HeaderBuilder::create_ip_header(&mut self.pkt_buf.ip, 28, 1, src_ip, dst_ip);
 
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
         self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
