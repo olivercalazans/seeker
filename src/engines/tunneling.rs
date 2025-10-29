@@ -33,7 +33,9 @@ impl ProtocolTunneler {
 
     fn send_tcp_over_udp(&mut self) {
         let dst_ip = Ipv4Addr::new(8, 8, 8, 8);
-        let pkt    = self.pkt_builder.build_tcp_over_udp_pkt(self.src_ip.clone(), dst_ip);
+        let pkt = self.pkt_builder.tcp_over_udp(
+            self.src_ip.clone(), dst_ip
+        );
         self.socket.send_to(pkt);
         println!("> TCP over UDP packet sent")
     }

@@ -1,6 +1,6 @@
 use std::{thread, time::Duration, mem};
 use crate::arg_parser::PortScanArgs;
-use crate::iterators::{DelayIter, PortIter};
+use crate::generators::{DelayIter, PortIter, RandValues};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{inline_display, get_host_name, iface_name_from_ip, iface_ip};
 
@@ -28,6 +28,7 @@ pub struct PortScanner {
     return_data: bool,
     raw_packets: Vec<Vec<u8>>,
     open_ports:  Vec<String>,
+    rng:         RandValues,
 }
 
 
@@ -39,6 +40,7 @@ impl PortScanner {
             iface:       iface_name_from_ip(args.target_ip.clone()),
             raw_packets: Vec::new(),
             open_ports:  Vec::new(),
+            rng:         RandValues::new(),
             args,
             return_data,
         }
@@ -103,7 +105,8 @@ impl PortScanner {
 
         for (port, delay) in iters.ports.by_ref().zip(iters.delays.by_ref())  {
 
-            let pkt = pkt_tools.builder.build_tcp_ip_pkt(src_ip, self.args.target_ip, port);
+            let src_port = self.rng.get_random_port();
+            let pkt      = pkt_tools.builder.tcp_ip(src_ip, src_port, self.args.target_ip, port);
             pkt_tools.socket.send_to(pkt, self.args.target_ip);
 
             Self::display_progress(&iters.ip, port, delay);

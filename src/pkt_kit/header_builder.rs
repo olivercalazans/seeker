@@ -9,7 +9,7 @@ pub struct HeaderBuilder;
 
 impl HeaderBuilder { 
 
-    pub fn create_tcp_header(
+    pub fn tcp(
             buffer:   &mut [u8],
             src_ip:   Ipv4Addr,
             src_port: u16, 
@@ -32,7 +32,7 @@ impl HeaderBuilder {
 
 
 
-    pub fn create_udp_header(
+    pub fn udp(
             buffer:      &mut [u8],
             src_ip:      Ipv4Addr,
             src_port:    u16,
@@ -53,7 +53,7 @@ impl HeaderBuilder {
 
 
 
-    pub fn create_icmp_header(
+    pub fn icmp(
             buffer: &mut [u8]
         ) {
             buffer[0] = 8;
@@ -68,7 +68,7 @@ impl HeaderBuilder {
 
 
 
-    pub fn create_ip_header(
+    pub fn ip(
             buffer:   &mut [u8],
             len:      u16,
             protocol: u8,
@@ -92,7 +92,7 @@ impl HeaderBuilder {
 
 
 
-    pub fn create_ether_header(
+    pub fn ether(
             buffer:  &mut [u8],
             src_mac: [u8; 6],
             dst_mac: [u8; 6]

@@ -1,7 +1,6 @@
 use std::net::Ipv4Addr;
-use rand::{Rng, rngs::ThreadRng};
 use crate::arg_parser::FloodArgs;
-use crate::iterators::Ipv4Iter;
+use crate::generators::{Ipv4Iter, RandValues};
 use crate::pkt_kit::{PacketBuilder, Layer2RawSocket};
 use crate::utils::{iface_network_cidr, inline_display};
 
@@ -12,7 +11,7 @@ pub struct PacketFlooder {
     start:     u32,
     end:       u32,
     pkts_sent: usize,
-    rng:       ThreadRng,
+    rng:       RandValues,
 }
 
 
@@ -25,7 +24,7 @@ impl PacketFlooder {
             start:     0,
             end:       0,
             pkts_sent: 0,
-            rng:       rand::thread_rng(),
+            rng:       RandValues::new(),
         }
     }
 
@@ -60,38 +59,26 @@ impl PacketFlooder {
     fn send_endlessly(&mut self) {
         let (mut pkt_builder, pkt_sender) = Self::setup_tools(&self.args.iface);
 
+        let fixed_src_ip  = self.args.src_ip;
+        let fixed_src_mac = self.args.src_mac;
+        let fixed_dst_ip  = self.args.dst_ip;
+        let fixed_dst_mac = self.args.dst_mac;
+
         loop {
-            let src_ip = self.get_src_ip();
-            let dst_ip = self.get_dst_ip();
+            let src_ip   = fixed_src_ip.unwrap_or_else(|| self.rng.get_random_ip(self.start, self.end));
+            let src_mac  = fixed_src_mac.unwrap_or_else(|| self.rng.get_random_mac());
+            let src_port = self.rng.get_random_port();
+            let dst_ip   = fixed_dst_ip.unwrap_or_else(|| self.rng.get_random_ip(self.start, self.end));
+            let dst_mac  = fixed_dst_mac.unwrap_or_else(|| self.rng.get_random_mac());
             
-            let tcp_pkt = pkt_builder.build_tcp_ether_pkt(src_ip, dst_ip);
+            let tcp_pkt = pkt_builder.tcp_ether(src_mac, src_ip, src_port, dst_mac, dst_ip, 53);
             pkt_sender.send_to(tcp_pkt);
 
-            let udp_pkt = pkt_builder.build_udp_ether_pkt(src_ip, dst_ip);
+            let udp_pkt = pkt_builder.udp_ether(src_mac, src_ip, src_port, dst_mac, dst_ip, 80);
             pkt_sender.send_to(udp_pkt);
             
             self.display_progress();
         }
-    }
-
-
-
-    fn get_src_ip(&mut self) -> Ipv4Addr {
-        self.args.src_ip.unwrap_or_else(|| self.get_random_ip())
-    }
-
-
-
-    fn get_dst_ip(&mut self) -> Ipv4Addr {
-        self.args.dst_ip.unwrap_or_else(|| self.get_random_ip())
-    }
-
-    
-
-    fn get_random_ip(&mut self) -> Ipv4Addr {
-        let rand_num     = self.rng.gen_range(self.start..=self.end);
-        let ip: Ipv4Addr = rand_num.into();
-        ip
     }
 
     

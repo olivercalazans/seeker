@@ -2,7 +2,7 @@ use std::{thread, time::Duration, collections::HashMap, mem};
 use clap::Parser;
 use crate::arg_parser::{NetMapArgs, PortScanArgs};
 use crate::engines::PortScanner;
-use crate::iterators::{Ipv4Iter, DelayIter};
+use crate::generators::{Ipv4Iter, DelayIter, RandValues};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
 use crate::utils::{abort, iface_network_cidr, inline_display, get_host_name, iface_ip};
 
@@ -26,8 +26,9 @@ struct Iterators {
 
 pub struct NetworkMapper {
     args:        NetMapArgs,
-    raw_packets: Vec<Vec<u8>>,
     active_ips:  HashMap<String, Vec<String>>,
+    raw_packets: Vec<Vec<u8>>,
+    rng:         RandValues,
 }
 
 
@@ -39,6 +40,7 @@ impl NetworkMapper {
             args,
             active_ips:  HashMap::new(),
             raw_packets: Vec::new(),
+            rng:         RandValues::new(),
         }
     }
 
@@ -94,13 +96,18 @@ impl NetworkMapper {
 
 
 
-    fn send_probes(&self, probe_type: &str, pkt_tools: &mut PacketTools, iters: &mut Iterators) {
+    fn send_probes(
+        &mut self,
+        probe_type: &str,
+        pkt_tools:  &mut PacketTools,
+        iters:      &mut Iterators
+    ) {
         let src_ip = iface_ip(&self.args.iface);
 
         for (i, (ip, delay)) in iters.ips.by_ref().zip(iters.delays.by_ref()).enumerate() {
             let pkt = match probe_type {
-                "icmp" => pkt_tools.builder.build_icmp_echo_req_pkt(src_ip, ip),
-                "tcp"  => pkt_tools.builder.build_tcp_ip_pkt(src_ip, ip, 80),
+                "icmp" => pkt_tools.builder.icmp_echo_req(src_ip, ip),
+                "tcp"  => pkt_tools.builder.tcp_ip(src_ip, self.rng.get_random_port(), ip, 80),
                 &_     => abort(format!("Unknown protocol type: {}", probe_type)),
             };
             pkt_tools.socket.send_to(&pkt, ip);

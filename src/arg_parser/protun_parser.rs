@@ -12,12 +12,12 @@ pub struct TunnelArgs {
     pub iface: String,
 
 
-    // Define a source IP
+    /// Define a source IP
     #[arg(long)]
     pub src_ip: Option<Ipv4Addr>,
 
 
-    // Define a source MAC address
+    /// Define a source MAC address
     #[arg(long)]
     pub src_mac: Option<Ipv4Addr>,
     
