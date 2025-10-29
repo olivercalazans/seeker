@@ -112,7 +112,7 @@ impl ProtocolTunneler {
             "> TCP over UDP packet sent.\n\tFrom IP: {:<15} MAC: {}\n\tTo   IP: {:<15} MAC: {}",
             pkt_info.src_ip, Self::format_mac(pkt_info.src_mac),
             pkt_info.dst_ip, Self::format_mac(pkt_info.dst_mac)
-        )
+        );
     }
 
 
