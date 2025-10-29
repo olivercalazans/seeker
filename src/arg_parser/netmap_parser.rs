@@ -18,11 +18,6 @@ pub struct NetMapArgs {
     pub iface: String,
 
 
-    /// Scan ports on active hosts
-    #[arg(short = 'P', long = "Portscan")]
-    pub portscan: bool,
-
-
     /// Send packets to hosts in random order
     #[arg(short, long)]
     pub random: bool,

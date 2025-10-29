@@ -72,10 +72,10 @@ impl PacketFlooder {
             let dst_mac  = fixed_dst_mac.unwrap_or_else(|| self.rng.get_random_mac());
             
             let tcp_pkt = pkt_builder.tcp_ether(src_mac, src_ip, src_port, dst_mac, dst_ip, 53);
-            pkt_sender.send_to(tcp_pkt);
+            pkt_sender.send(tcp_pkt);
 
             let udp_pkt = pkt_builder.udp_ether(src_mac, src_ip, src_port, dst_mac, dst_ip, 80);
-            pkt_sender.send_to(udp_pkt);
+            pkt_sender.send(udp_pkt);
             
             self.display_progress();
         }

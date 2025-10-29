@@ -1,5 +1,6 @@
 use std::net::Ipv4Addr;
 use clap::Parser;
+use crate::arg_parser::parse_mac;
 use crate::utils::default_iface_name;
 
 
@@ -18,7 +19,7 @@ pub struct TunnelArgs {
 
 
     /// Define a source MAC address
-    #[arg(long)]
-    pub src_mac: Option<Ipv4Addr>,
+    #[arg(long, value_parser = parse_mac)]
+    pub src_mac: Option<[u8; 6]>,
     
 }

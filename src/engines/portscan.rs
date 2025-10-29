@@ -1,4 +1,4 @@
-use std::{thread, time::Duration, mem};
+use std::{thread, time::Duration, mem, net::Ipv4Addr};
 use crate::arg_parser::PortScanArgs;
 use crate::generators::{DelayIter, PortIter, RandValues};
 use crate::pkt_kit::{PacketBuilder, PacketDissector, Layer3RawSocket, PacketSniffer};
@@ -25,39 +25,34 @@ struct Iterators {
 pub struct PortScanner {
     args:        PortScanArgs,
     iface:       String,
-    return_data: bool,
+    my_ip:       Ipv4Addr,
+    rand:        RandValues,
     raw_packets: Vec<Vec<u8>>,
     open_ports:  Vec<String>,
-    rng:         RandValues,
 }
 
 
 
 impl PortScanner {
 
-    pub fn new(args: PortScanArgs, return_data: bool) -> Self {
+    pub fn new(args: PortScanArgs) -> Self {
+        let iface = iface_name_from_ip(args.target_ip.clone());
         Self {
-            iface:       iface_name_from_ip(args.target_ip.clone()),
+            my_ip:       iface_ip(&iface),
+            rand:        RandValues::new(),
             raw_packets: Vec::new(),
             open_ports:  Vec::new(),
-            rng:         RandValues::new(),
             args,
-            return_data,
+            iface,
         }
     }
 
 
 
-    pub fn execute(&mut self) -> Vec<String> {
+    pub fn execute(&mut self) {
         self.send_and_receive();
         self.process_raw_packets();
-        
-        if self.return_data {
-            return self.open_ports.clone()
-        }
-        
         self.display_result();
-        Vec::new()
     }
 
 
@@ -66,9 +61,11 @@ impl PortScanner {
         let mut pkt_tools = self.setup_tools();
         let mut iters     = self.setup_iterators();
 
-        pkt_tools.sniffer.start_buffered_sniffer();
+        pkt_tools.sniffer.start();
         self.send_probes(&mut pkt_tools, &mut iters);
-        Self::finish_tools(&mut pkt_tools);
+        
+        thread::sleep(Duration::from_secs(3));
+        pkt_tools.sniffer.stop();
         
         self.raw_packets = pkt_tools.sniffer.get_packets();
     }
@@ -77,10 +74,16 @@ impl PortScanner {
 
     fn setup_tools(&self) -> PacketTools {
         PacketTools {
-            sniffer: PacketSniffer::new(self.filter(), self.iface.clone(), self.args.target_ip.to_string()),
+            sniffer: PacketSniffer::new(self.iface.clone(), self.get_bpf_filter()),
             builder: PacketBuilder::new(),
             socket:  Layer3RawSocket::new(&self.iface),
         }
+    }
+
+
+
+    fn get_bpf_filter(&self) -> String {
+        format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", self.my_ip, self.args.target_ip)
     }
 
 
@@ -94,19 +97,11 @@ impl PortScanner {
 
 
 
-    fn filter(&self) -> String {
-        "pscan-tcp".to_string()
-    }
-
-
-
     fn send_probes(&mut self, pkt_tools: &mut PacketTools, iters: &mut Iterators) {
-        let src_ip = iface_ip(&self.iface);
-
         for (port, delay) in iters.ports.by_ref().zip(iters.delays.by_ref())  {
 
-            let src_port = self.rng.get_random_port();
-            let pkt      = pkt_tools.builder.tcp_ip(src_ip, src_port, self.args.target_ip, port);
+            let src_port = self.rand.get_random_port();
+            let pkt      = pkt_tools.builder.tcp_ip(self.my_ip, src_port, self.args.target_ip, port);
             pkt_tools.socket.send_to(pkt, self.args.target_ip);
 
             Self::display_progress(&iters.ip, port, delay);
@@ -120,13 +115,6 @@ impl PortScanner {
     fn display_progress(ip: &str, port: u16, delay: f32) {
         let msg = format!("Packet sent to {} port {:<5} - delay: {:.2}", ip, port, delay);
         inline_display(msg);
-    }
-
-
-
-    fn finish_tools(pkt_tools: &mut PacketTools) {
-        thread::sleep(Duration::from_secs(3));
-        pkt_tools.sniffer.stop();
     }
 
 

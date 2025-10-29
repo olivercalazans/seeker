@@ -71,7 +71,7 @@ impl Layer2RawSocket {
 
 
 
-    pub fn send_to(&self, frame: &[u8]) {
+    pub fn send(&self, frame: &[u8]) {
         unsafe {
             let ret = sendto(
                 self.file_desc,

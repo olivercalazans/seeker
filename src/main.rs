@@ -97,7 +97,7 @@ impl Command {
     
     fn execute_pscan(&self) {
         let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
-        let mut scanner = PortScanner::new(cmd_args, false);
+        let mut scanner = PortScanner::new(cmd_args);
         scanner.execute();
     }
 
