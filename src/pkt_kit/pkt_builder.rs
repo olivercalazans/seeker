@@ -32,13 +32,14 @@ impl PacketBuilder {
         let mut tcp_buffer = [0u8; 27];        
 
         HeaderBuilder::tcp(&mut tcp_buffer, src_ip, src_tcp_port, dst_ip, dst_tcp_port);
-        HeaderBuilder::udp(&mut self.pkt_buf.layer4, src_ip, src_udp_port, dst_ip, dst_udp_port, 35);
+        HeaderBuilder::udp(&mut self.pkt_buf.layer4, src_ip, src_udp_port, dst_ip, dst_udp_port, 0);
         HeaderBuilder::ip(&mut self.pkt_buf.ip, 40, 17, src_ip, dst_ip);
         HeaderBuilder::ether(&mut self.pkt_buf.ether, src_mac, dst_mac);
 
-        self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
-        self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
-        self.pkt_buf.packet[28..].copy_from_slice(&tcp_buffer);
+        self.pkt_buf.packet[..14].copy_from_slice(&self.pkt_buf.ether);
+        self.pkt_buf.packet[14..34].copy_from_slice(&self.pkt_buf.ip);
+        self.pkt_buf.packet[34..42].copy_from_slice(&self.pkt_buf.layer4[..8]);
+        self.pkt_buf.packet[42..].copy_from_slice(&tcp_buffer);
         &self.pkt_buf.packet
     }
 

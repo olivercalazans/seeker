@@ -108,7 +108,19 @@ impl ProtocolTunneler {
             pkt_info.dst_mac, pkt_info.dst_ip, 53, 80
         );
         self.socket.send(pkt);
-        println!("> TCP over UDP packet sent")
+        println!(
+            "> TCP over UDP packet sent.\n\tFrom IP: {:<15} MAC: {}\n\tTo   IP: {:<15} MAC: {}",
+            pkt_info.src_ip, Self::format_mac(pkt_info.src_mac),
+            pkt_info.dst_ip, Self::format_mac(pkt_info.dst_mac)
+        )
+    }
+
+
+    fn format_mac(mac: [u8; 6]) -> String {
+        mac.iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<Vec<_>>()
+            .join(":")
     }
 
 }
