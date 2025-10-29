@@ -13,8 +13,8 @@ use crate::utils::abort;
 
 
 fn main() {
-    let mut seeker = Command::new();
-    seeker.run();
+    let mut offscan = Command::new();
+    offscan.run();
 }
 
 

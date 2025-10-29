@@ -1,6 +1,6 @@
-<h1 align="center"> Seeker </h1>
+<h1 align="center"> OffScan </h1>
 
-**Seeker** is a command-line tool developed in Rust for network exploration, device and service enumeration, and offensive security testing on Linux. It provides a compact, efficient interface for scanning, probing, and capturing network data, aimed at defenders and red‑teamers alike. What it can do:
+**OffScan** is a command-line tool developed in Rust for network exploration, device and service enumeration, and offensive security testing on Linux. It provides a compact, efficient interface for scanning, probing, and capturing network data, aimed at defenders and red‑teamers alike. What it can do:
 
 <br>
 
@@ -18,7 +18,7 @@ This project uses **Cargo**, Rust's package manager and build system, to manage 
 If you don't have Cargo installed, follow the steps on the [official Rust installation page](https://www.rust-lang.org/tools/install).
 
 All Rust dependencies are managed automatically by Cargo — no manual installation required.  
-You can find them listed in the [Cargo.toml](https://github.com/olivercalazans/seeker/blob/main/Cargo.toml) file.
+You can find them listed in the [Cargo.toml](https://github.com/olivercalazans/offscan/blob/main/Cargo.toml) file.
 
 > [!IMPORTANT]
 > In addition to Cargo-managed crates, this project requires some **system-level dependencies**:

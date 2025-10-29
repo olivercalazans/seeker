@@ -13,12 +13,12 @@ pub struct FloodArgs {
 
 
     /// Define a source IP
-    #[arg(long = "src-ip")]
+    #[arg(long)]
     pub src_ip: Option<Ipv4Addr>,
 
 
     /// Define a destination IP
-    #[arg(long = "dst-ip")]
+    #[arg(long)]
     pub dst_ip: Option<Ipv4Addr>,
 
 }

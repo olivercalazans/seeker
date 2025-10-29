@@ -88,17 +88,18 @@ impl PacketFlooder {
 
     
 
-    fn display_progress(&mut self) {
-        self.pkts_sent += 2;
-        let msg: String = format!("Packets sent: {}", &self.pkts_sent);
-        inline_display(msg);
-    }
-
-
     fn get_random_ip(&mut self) -> Ipv4Addr {
         let rand_num     = self.rng.gen_range(self.start..=self.end);
         let ip: Ipv4Addr = rand_num.into();
         ip
+    }
+
+    
+
+    fn display_progress(&mut self) {
+        self.pkts_sent += 2;
+        let msg: String = format!("Packets sent: {}", &self.pkts_sent);
+        inline_display(msg);
     }
 
 }
