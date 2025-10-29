@@ -1,6 +1,6 @@
 pub mod arg_parser;
 pub mod engines;
-pub mod iterators;
+pub mod generators;
 pub mod pkt_kit;
 pub mod utils;
 
@@ -13,8 +13,8 @@ use crate::utils::abort;
 
 
 fn main() {
-    let mut seeker = Command::new();
-    seeker.run();
+    let mut offscan = Command::new();
+    offscan.run();
 }
 
 
@@ -97,7 +97,7 @@ impl Command {
     
     fn execute_pscan(&self) {
         let cmd_args    = PortScanArgs::parse_from(self.arguments.clone());
-        let mut scanner = PortScanner::new(cmd_args, false);
+        let mut scanner = PortScanner::new(cmd_args);
         scanner.execute();
     }
 

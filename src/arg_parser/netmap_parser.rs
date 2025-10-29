@@ -1,4 +1,4 @@
-pub use clap::Parser;
+use clap::Parser;
 use crate::utils::default_iface_name;
 
 
@@ -16,11 +16,6 @@ pub struct NetMapArgs {
     /// Define a network interface to send the packets
     #[arg(short, long, default_value_t = default_iface_name())]
     pub iface: String,
-
-
-    /// Scan ports on active hosts
-    #[arg(short = 'P', long = "Portscan")]
-    pub portscan: bool,
 
 
     /// Send packets to hosts in random order

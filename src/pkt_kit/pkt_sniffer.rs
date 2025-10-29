@@ -1,36 +1,33 @@
 use std::{thread, time::Duration, sync::{Arc, Mutex}, sync::atomic::{AtomicBool, Ordering}};
 use pcap::{Device, Capture};
-use crate::utils::{iface_ip, iface_network_cidr};
 
 
 
 pub struct PacketSniffer {
-    command:     String,
+    filter:      String,
     handle:      Option<thread::JoinHandle<()>>,
     iface:       String,
     raw_packets: Arc<Mutex<Vec<Vec<u8>>>>,
     running:     Arc<AtomicBool>,
-    src_ip:      String,
 }
 
 
 
 impl PacketSniffer {
 
-    pub fn new(command: String, iface: String, target_ip: String) -> Self {
+    pub fn new(iface: String, filter: String) -> Self {
         Self {
-            command,
+            filter,
             iface,
             handle:      None,
             raw_packets: Arc::new(Mutex::new(Vec::with_capacity(256))),
             running:     Arc::new(AtomicBool::new(false)),
-            src_ip:      target_ip,
         }
     }
 
 
 
-    pub fn start_buffered_sniffer(&mut self) {
+    pub fn start(&mut self) {
         self.running.store(true, Ordering::Relaxed);
         let running = Arc::clone(&self.running);
         let packets = Arc::clone(&self.raw_packets);
@@ -46,8 +43,7 @@ impl PacketSniffer {
     fn create_sniffer(&self) -> Capture<pcap::Active> {
         let dev     = self.get_default_iface();
         let mut cap = PacketSniffer::open_capture(dev.clone());
-        let filter  = self.get_bpf_filter_parameters();
-        cap.filter(&filter, true).unwrap();
+        cap.filter(&self.filter, true).unwrap();
         
         let cap = cap.setnonblock().unwrap();
         cap
@@ -71,19 +67,6 @@ impl PacketSniffer {
             .immediate_mode(true)
             .open()
             .unwrap()
-    }
-
-
-
-    fn get_bpf_filter_parameters(&self) -> String {
-        let my_ip = iface_ip(&self.iface);
-
-        match self.command.as_str() {
-            "netmap"    => format!("(dst host {} and src net {}) and (tcp or (icmp and icmp[0] = 0))", my_ip, iface_network_cidr(&self.iface)),
-            "pscan-tcp" => format!("tcp[13] & 0x12 == 0x12 and dst host {} and src host {}", my_ip, self.src_ip),
-            "pscan-udp" => format!("icmp and icmp[0] == 3 and icmp[1] == 3 and dst host {} and src host {}", my_ip, self.src_ip),
-            _           => panic!("[ ERROR ] Unknown filter: {}", self.command),
-        }
     }
 
 

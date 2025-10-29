@@ -1,5 +1,6 @@
-pub use std::net::Ipv4Addr;
-pub use clap::Parser;
+use std::net::Ipv4Addr;
+use clap::Parser;
+use crate::arg_parser::parse_mac;
 use crate::utils::default_iface_name;
 
 
@@ -13,12 +14,23 @@ pub struct FloodArgs {
 
 
     /// Define a source IP
-    #[arg(long = "src-ip")]
+    #[arg(long)]
     pub src_ip: Option<Ipv4Addr>,
 
 
+    /// Define a source MAC
+    #[arg(long, value_parser = parse_mac)]
+    pub src_mac: Option<[u8; 6]>,
+
+
     /// Define a destination IP
-    #[arg(long = "dst-ip")]
+    #[arg(long)]
     pub dst_ip: Option<Ipv4Addr>,
+
+
+    /// Define a destination MAC
+    #[arg(long, value_parser = parse_mac)]
+    pub dst_mac: Option<[u8; 6]>,
+    
 
 }

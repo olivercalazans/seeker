@@ -10,7 +10,7 @@ unsafe fn get_ifaddrs_ptr() -> *mut ifaddrs {
         let mut ifap: *mut ifaddrs = std::ptr::null_mut();
         
         if getifaddrs(&mut ifap) != 0 {
-            abort(&format!("[ERROR] getifaddrs failed: {}", std::io::Error::last_os_error()));
+            abort(format!("getifaddrs failed: {}", std::io::Error::last_os_error()));
         }
 
         ifap
@@ -44,7 +44,7 @@ pub fn iface_name_from_ip(dst_ip: Ipv4Addr) -> String {
         }
 
         freeifaddrs(ifap);
-        abort(&format!("[ERROR] Could not find any interface with IP {}", ip));
+        abort(format!("Could not find any interface with IP {}", ip));
     }
 }
 
@@ -54,10 +54,10 @@ pub fn src_ip_from_dst_ip(dst_ip: Ipv4Addr) -> Ipv4Addr {
     let sockaddr = SocketAddrV4::new(dst_ip, 53);
     
     let sock = UdpSocket::bind(("0.0.0.0", 0))
-        .unwrap_or_else(|e| abort(&format!("Failed to bind UDP socket: {}", e)));
+        .unwrap_or_else(|e| abort(format!("Failed to bind UDP socket: {}", e)));
     
     sock.connect(sockaddr)
-        .unwrap_or_else(|e| abort(&format!("Failed to connect UDP socket: {}", e)));
+        .unwrap_or_else(|e| abort(format!("Failed to connect UDP socket: {}", e)));
 
     match sock.local_addr().unwrap().ip() {
         std::net::IpAddr::V4(v4) => v4,
