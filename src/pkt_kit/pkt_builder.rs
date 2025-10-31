@@ -91,9 +91,9 @@ impl PacketBuilder {
 
     pub fn tcp_ip(
         &mut self,
-        src_ip: Ipv4Addr,
+        src_ip:   Ipv4Addr,
         src_port: u16,
-        dst_ip: Ipv4Addr,
+        dst_ip:   Ipv4Addr,
         dst_port: u16,
         ) -> &[u8]
     {
@@ -109,9 +109,9 @@ impl PacketBuilder {
 
     pub fn udp_ip(
         &mut self,
-        src_ip: Ipv4Addr,
+        src_ip:   Ipv4Addr,
         src_port: u16,
-        dst_ip: Ipv4Addr,
+        dst_ip:   Ipv4Addr,
         dst_port: u16,
         ) -> &[u8]
     {
@@ -137,6 +137,22 @@ impl PacketBuilder {
         self.pkt_buf.packet[..20].copy_from_slice(&self.pkt_buf.ip);
         self.pkt_buf.packet[20..28].copy_from_slice(&self.pkt_buf.layer4[..8]);
         &self.pkt_buf.packet[..28]
+    }
+
+
+
+    pub fn auth_802_11(
+        &mut self,
+        src_mac: [u8; 6],
+        dst_mac: [u8; 6]
+        ) -> &[u8]
+    {
+        HeaderBuilder::auth_802_11(&mut self.pkt_buf.packet, src_mac, dst_mac);
+
+        self.pkt_buf.packet[24..26].copy_from_slice(&0u16.to_le_bytes());
+        self.pkt_buf.packet[26..28].copy_from_slice(&1u16.to_le_bytes());
+        self.pkt_buf.packet[28..30].copy_from_slice(&0u16.to_le_bytes());
+        &self.pkt_buf.packet[..30]
     }
 
 }
