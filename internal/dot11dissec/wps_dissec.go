@@ -20,7 +20,6 @@ package dot11dissec
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"offscan/internal/models"
 )
 
@@ -30,7 +29,6 @@ const (
     attrVersion           = 0x104A 
     attrWPSState          = 0x1044
     attrAPSetupLocked     = 0x1057
-    attrConfigMethods     = 0x1008
     attrSelectedRegistrar = 0x1053
     attrVendorExtension   = 0x1049
 )
@@ -78,12 +76,11 @@ func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
 			if l >= 1 { 
 				info.APSetupLocked = val[0] != 0 
 			}
-
-		case attrConfigMethods, attrSelectedRegistrar: 
-			if l >= 2 {
-        info.ConfigMethods = binary.BigEndian.Uint16(val)
-        fmt.Printf("DEBUG: ConfigMethods = 0x%04x\n", info.ConfigMethods)
-    }
+		
+		case attrSelectedRegistrar:
+		    if l >= 1 {
+		        info.SelectedRegistrar = val[0] != 0 
+		    }
 
 		case attrVendorExtension:
 			if v := checkVendorExt(l, val); v != 0 {

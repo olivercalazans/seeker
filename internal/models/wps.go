@@ -23,32 +23,19 @@ import (
 )
 
 
-const (
-    methodUSB = 1 << iota // 1 << 0 = 1   (0x0001)
-    methodETHER           // 1 << 1 = 2   (0x0002)
-    methodLAB             // 1 << 2 = 4   (0x0004)
-    methodDISP            // 1 << 3 = 8   (0x0008)
-    methodEXTNFC          // 1 << 4 = 16  (0x0010)
-    methodINTNFC          // 1 << 5 = 32  (0x0020)
-    methodNFCINTF         // 1 << 6 = 64  (0x0040)
-    methodPBC             // 1 << 7 = 128 (0x0080)
-    methodKPAD            // 1 << 8 = 256 (0x0100)
-)
-
-
 
 type WPSInfo struct {
-	Version        uint8
-	IsConfigured   bool
-	ConfigMethods  uint16
-	APSetupLocked  bool
-	StatePresent   bool
+	Version           uint8
+	IsConfigured      bool
+	APSetupLocked     bool
+	StatePresent      bool
+	SelectedRegistrar bool
 }
 
 
 
 func (wi WPSInfo) String() string {
-    if wi.Version == 0 && !wi.StatePresent && wi.ConfigMethods == 0 && !wi.APSetupLocked {
+    if wi.Version == 0 && !wi.StatePresent && !wi.APSetupLocked {
         return "0.0"
     }
 
@@ -60,18 +47,16 @@ func (wi WPSInfo) String() string {
 
     b.WriteString(formatVersion(wi.Version))
 
-    if wi.StatePresent && wi.ConfigMethods == 0 {
+	if wi.SelectedRegistrar {
+		b.WriteString(" RGT")
+	}
+
+    if wi.StatePresent {
         if wi.IsConfigured {
             b.WriteString(" CONF")
         } else {
             b.WriteString(" UNCONF")
         }
-    }
-
-    methods := wi.methodsString()
-    if methods != "" {
-        if b.Len() > 0 { b.WriteByte(' ') }
-        b.WriteString(methods)
     }
 
     return b.String()
@@ -88,85 +73,24 @@ func formatVersion(v uint8) string {
 
 
 
-func (wi WPSInfo) methodsString() string {
-	var b strings.Builder
-	first := true
-
-	appendMethod := func(name string) {
-		if !first { b.WriteByte(' ') }
-		b.WriteString(name)
-		first = false
-	}
-
-	if wi.hasUSB()     { appendMethod("USB")     }
-	if wi.hasETHER()   { appendMethod("ETHER")   }
-	if wi.hasLAB()     { appendMethod("LAB")     }
-	if wi.hasDISP()    { appendMethod("DISP")    }
-	if wi.hasEXTNFC()  { appendMethod("EXTNFC")  }
-	if wi.hasINTNFC()  { appendMethod("INTNFC")  }
-	if wi.hasNFCINTF() { appendMethod("NFCINTF") }
-	if wi.hasPBC()     { appendMethod("PBC")     }
-	if wi.hasKPAD()    { appendMethod("KPAD")    }
-
-	return b.String()
-}
-
-
-
-func (wi WPSInfo) hasUSB()     bool { return wi.ConfigMethods&methodUSB != 0     }
-func (wi WPSInfo) hasETHER()   bool { return wi.ConfigMethods&methodETHER != 0   }
-func (wi WPSInfo) hasLAB()     bool { return wi.ConfigMethods&methodLAB != 0     }
-func (wi WPSInfo) hasDISP()    bool { return wi.ConfigMethods&methodDISP != 0    }
-func (wi WPSInfo) hasEXTNFC()  bool { return wi.ConfigMethods&methodEXTNFC != 0  }
-func (wi WPSInfo) hasINTNFC()  bool { return wi.ConfigMethods&methodINTNFC != 0  }
-func (wi WPSInfo) hasNFCINTF() bool { return wi.ConfigMethods&methodNFCINTF != 0 }
-func (wi WPSInfo) hasPBC()     bool { return wi.ConfigMethods&methodPBC != 0     }
-func (wi WPSInfo) hasKPAD()    bool { return wi.ConfigMethods&methodKPAD != 0    }
-
-
-
 func (wi WPSInfo) Len() int {
 	if wi.APSetupLocked {
         return 7
     }
+   
+	total := 3  // 0.0 or 1.0 or 2.0
 
-    total := 0
+	if wi.SelectedRegistrar {
+		total += 4  // ' ' + RGT
+	}
 
-    if wi.Version > 0 {
-		total += 3  // 1.0 or 2.0
-    }
-
-    if wi.IsConfigured && wi.ConfigMethods == 0 {
-        total += 5  // ' ' + conf
-    } else {
-        total += 7  // ' ' + unconf
-    }
-
-	if wi.ConfigMethods != 0 || wi.APSetupLocked {
-        total++ 
-    }
-
-    if wi.ConfigMethods != 0 {
-        total += wi.lenMethods()
-    }
+	if wi.StatePresent {
+    	if wi.IsConfigured {
+    	    total += 5  // ' ' + conf
+    	} else {
+    	    total += 7  // ' ' + unconf
+    	}
+	}
 
     return total
-}
-
-
-
-func (wi WPSInfo) lenMethods() int {
-	var lenMethods int
-
-	if wi.hasUSB()     { lenMethods += 4 } // ' ' + USB    
-	if wi.hasETHER()   { lenMethods += 6 } // ' ' + ETHER  
-	if wi.hasLAB()     { lenMethods += 4 } // ' ' + LAB    
-	if wi.hasDISP()    { lenMethods += 5 } // ' ' + DISP   
-	if wi.hasEXTNFC()  { lenMethods += 7 } // ' ' + EXTNFC 
-	if wi.hasINTNFC()  { lenMethods += 7 } // ' ' + INTNFC 
-	if wi.hasNFCINTF() { lenMethods += 8 } // ' ' + NFCINTF
-	if wi.hasPBC()     { lenMethods += 4 } // ' ' + PBC    
-	if wi.hasKPAD()    { lenMethods += 5 } // ' ' + KPAD   
-
-	return lenMethods
 }
