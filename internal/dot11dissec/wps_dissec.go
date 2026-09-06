@@ -20,6 +20,7 @@ package dot11dissec
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"offscan/internal/models"
 )
 
@@ -64,12 +65,13 @@ func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
 		switch t {
 		case attrVersion: 
     		if l >= 1 && info.Version == 0 {
-    		    info.Version = int(val[0])
+    		    info.Version = val[0]
     		}
 
 		case attrWPSState: 
 			if l >= 1 { 
-				info.IsConfigured  = val[0] == 1 
+				info.IsConfigured = val[0] == 2 
+				info.StatePresent = true
 			}
 		
 		case attrAPSetupLocked: 
@@ -78,9 +80,10 @@ func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
 			}
 
 		case attrConfigMethods, attrSelectedRegistrar: 
-			if l >= 2 { 
-				info.ConfigMethods = binary.BigEndian.Uint16(val) 
-			}
+			if l >= 2 {
+        info.ConfigMethods = binary.BigEndian.Uint16(val)
+        fmt.Printf("DEBUG: ConfigMethods = 0x%04x\n", info.ConfigMethods)
+    }
 
 		case attrVendorExtension:
 			if v := checkVendorExt(l, val); v != 0 {
@@ -91,14 +94,12 @@ func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
 		pos += 4 + l
 	}
 
-	if info.Version == 0 { info.Version = 0x10 }
-
 	return info
 }
 
 
 
-func checkVendorExt(l int, val []byte) int {
+func checkVendorExt(l int, val []byte) uint8 {
 	if l < 3 || !bytes.Equal(val[:3], []byte{0x00, 0x37, 0x2A}) {
         return 0
     }
@@ -111,7 +112,7 @@ func checkVendorExt(l int, val []byte) int {
         if subpos+2+subLen > l { return 0 }
         
 		if subType == 0x00 && subLen >= 1 {
-            return int(val[subpos+2])
+            return val[subpos+2]
         }
         
 		subpos += 2 + subLen

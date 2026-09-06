@@ -18,7 +18,7 @@
 package models
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 )
 
@@ -38,64 +38,57 @@ const (
 
 
 type WPSInfo struct {
-	Version        int
+	Version        uint8
 	IsConfigured   bool
 	ConfigMethods  uint16
 	APSetupLocked  bool
+	StatePresent   bool
 }
 
 
 
-func (info WPSInfo) String() string {
-	if info.Version == 0 && !info.IsConfigured && info.ConfigMethods == 0 && !info.APSetupLocked {
-		return "?????"
-	}
+func (wi WPSInfo) String() string {
+    if wi.Version == 0 && !wi.StatePresent && wi.ConfigMethods == 0 && !wi.APSetupLocked {
+        return "0.0"
+    }
 
-	var b strings.Builder
+    if wi.APSetupLocked {
+        return "Locked"
+    }
 
-	if info.Version > 0 {
-		b.WriteString("v")
-		b.WriteString(formatVersion(info.Version))
-	}
+    var b strings.Builder
 
-	if info.IsConfigured {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("configured")
-	} else {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("unconfigured")
-	}
+    b.WriteString(formatVersion(wi.Version))
 
-	methods := info.methodsString()
-	if methods != "" {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString(methods)
-	}
+    if wi.StatePresent && wi.ConfigMethods == 0 {
+        if wi.IsConfigured {
+            b.WriteString(" CONF")
+        } else {
+            b.WriteString(" UNCONF")
+        }
+    }
 
-	if info.APSetupLocked {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("locked")
-	}
+    methods := wi.methodsString()
+    if methods != "" {
+        if b.Len() > 0 { b.WriteByte(' ') }
+        b.WriteString(methods)
+    }
 
-	return b.String()
+    return b.String()
 }
 
 
 
-func formatVersion(v int) string {
+func formatVersion(v uint8) string {
 	major := v >> 4
 	minor := v & 0x0F
 
-	if minor == 0 {
-		return strconv.Itoa(major)
-	}
-
-	return strconv.Itoa(major) + "." + strconv.Itoa(minor)
+	return fmt.Sprintf("%d.%d", major, minor)
 }
 
 
 
-func (info WPSInfo) methodsString() string {
+func (wi WPSInfo) methodsString() string {
 	var b strings.Builder
 	first := true
 
@@ -105,56 +98,56 @@ func (info WPSInfo) methodsString() string {
 		first = false
 	}
 
-	if info.hasUSB()     { appendMethod("USB")     }
-	if info.hasETHER()   { appendMethod("ETHER")   }
-	if info.hasLAB()     { appendMethod("LAB")     }
-	if info.hasDISP()    { appendMethod("DISP")    }
-	if info.hasEXTNFC()  { appendMethod("EXTNFC")  }
-	if info.hasINTNFC()  { appendMethod("INTNFC")  }
-	if info.hasNFCINTF() { appendMethod("NFCINTF") }
-	if info.hasPBC()     { appendMethod("PBC")     }
-	if info.hasKPAD()    { appendMethod("KPAD")    }
+	if wi.hasUSB()     { appendMethod("USB")     }
+	if wi.hasETHER()   { appendMethod("ETHER")   }
+	if wi.hasLAB()     { appendMethod("LAB")     }
+	if wi.hasDISP()    { appendMethod("DISP")    }
+	if wi.hasEXTNFC()  { appendMethod("EXTNFC")  }
+	if wi.hasINTNFC()  { appendMethod("INTNFC")  }
+	if wi.hasNFCINTF() { appendMethod("NFCINTF") }
+	if wi.hasPBC()     { appendMethod("PBC")     }
+	if wi.hasKPAD()    { appendMethod("KPAD")    }
 
 	return b.String()
 }
 
 
 
-func (info WPSInfo) hasUSB()     bool { return info.ConfigMethods&methodUSB != 0     }
-func (info WPSInfo) hasETHER()   bool { return info.ConfigMethods&methodETHER != 0   }
-func (info WPSInfo) hasLAB()     bool { return info.ConfigMethods&methodLAB != 0     }
-func (info WPSInfo) hasDISP()    bool { return info.ConfigMethods&methodDISP != 0    }
-func (info WPSInfo) hasEXTNFC()  bool { return info.ConfigMethods&methodEXTNFC != 0  }
-func (info WPSInfo) hasINTNFC()  bool { return info.ConfigMethods&methodINTNFC != 0  }
-func (info WPSInfo) hasNFCINTF() bool { return info.ConfigMethods&methodNFCINTF != 0 }
-func (info WPSInfo) hasPBC()     bool { return info.ConfigMethods&methodPBC != 0     }
-func (info WPSInfo) hasKPAD()    bool { return info.ConfigMethods&methodKPAD != 0    }
+func (wi WPSInfo) hasUSB()     bool { return wi.ConfigMethods&methodUSB != 0     }
+func (wi WPSInfo) hasETHER()   bool { return wi.ConfigMethods&methodETHER != 0   }
+func (wi WPSInfo) hasLAB()     bool { return wi.ConfigMethods&methodLAB != 0     }
+func (wi WPSInfo) hasDISP()    bool { return wi.ConfigMethods&methodDISP != 0    }
+func (wi WPSInfo) hasEXTNFC()  bool { return wi.ConfigMethods&methodEXTNFC != 0  }
+func (wi WPSInfo) hasINTNFC()  bool { return wi.ConfigMethods&methodINTNFC != 0  }
+func (wi WPSInfo) hasNFCINTF() bool { return wi.ConfigMethods&methodNFCINTF != 0 }
+func (wi WPSInfo) hasPBC()     bool { return wi.ConfigMethods&methodPBC != 0     }
+func (wi WPSInfo) hasKPAD()    bool { return wi.ConfigMethods&methodKPAD != 0    }
 
 
 
-func (info WPSInfo) Len() int {
+func (wi WPSInfo) Len() int {
+	if wi.APSetupLocked {
+        return 7
+    }
+
     total := 0
 
-    if info.Version > 0 {
-		total += 4  // 1.0v or 2.0v
+    if wi.Version > 0 {
+		total += 3  // 1.0 or 2.0
     }
 
-    if info.IsConfigured {
-        total += 11  // ' ' + configured(11)
+    if wi.IsConfigured && wi.ConfigMethods == 0 {
+        total += 5  // ' ' + conf
     } else {
-        total += 13  // ' ' + unconfigured(12)
+        total += 7  // ' ' + unconf
     }
 
-	if info.ConfigMethods != 0 || info.APSetupLocked {
+	if wi.ConfigMethods != 0 || wi.APSetupLocked {
         total++ 
     }
 
-    if info.ConfigMethods != 0 {
-        total += info.lenMethods()
-    }
-
-    if info.APSetupLocked {
-        total += 7  // ' ' + locked
+    if wi.ConfigMethods != 0 {
+        total += wi.lenMethods()
     }
 
     return total
@@ -162,18 +155,18 @@ func (info WPSInfo) Len() int {
 
 
 
-func (info WPSInfo) lenMethods() int {
+func (wi WPSInfo) lenMethods() int {
 	var lenMethods int
 
-	if info.hasUSB()     { lenMethods += 4 } // ' ' + USB    
-	if info.hasETHER()   { lenMethods += 6 } // ' ' + ETHER  
-	if info.hasLAB()     { lenMethods += 4 } // ' ' + LAB    
-	if info.hasDISP()    { lenMethods += 5 } // ' ' + DISP   
-	if info.hasEXTNFC()  { lenMethods += 7 } // ' ' + EXTNFC 
-	if info.hasINTNFC()  { lenMethods += 7 } // ' ' + INTNFC 
-	if info.hasNFCINTF() { lenMethods += 8 } // ' ' + NFCINTF
-	if info.hasPBC()     { lenMethods += 4 } // ' ' + PBC    
-	if info.hasKPAD()    { lenMethods += 5 } // ' ' + KPAD   
+	if wi.hasUSB()     { lenMethods += 4 } // ' ' + USB    
+	if wi.hasETHER()   { lenMethods += 6 } // ' ' + ETHER  
+	if wi.hasLAB()     { lenMethods += 4 } // ' ' + LAB    
+	if wi.hasDISP()    { lenMethods += 5 } // ' ' + DISP   
+	if wi.hasEXTNFC()  { lenMethods += 7 } // ' ' + EXTNFC 
+	if wi.hasINTNFC()  { lenMethods += 7 } // ' ' + INTNFC 
+	if wi.hasNFCINTF() { lenMethods += 8 } // ' ' + NFCINTF
+	if wi.hasPBC()     { lenMethods += 4 } // ' ' + PBC    
+	if wi.hasKPAD()    { lenMethods += 5 } // ' ' + KPAD   
 
 	return lenMethods
 }
