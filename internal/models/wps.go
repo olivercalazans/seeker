@@ -23,36 +23,102 @@ import (
 )
 
 
+const (
+	wpsVersionMask = 0xC0
+	wpsConfigMask  = 1 << (iota + 2)  // 1 << (0 + 2) = 0x04
+	wpsAPSetupLocked                  // 1 << (1 + 2) = 0x08
+	wpsStatePresent                   // 1 << (2 + 2) = 0x10
+	wpsSelectedRegistrar              // 1 << (3 + 2) = 0x20
+)
+
+
 
 type WPSInfo struct {
-	Version           uint8
-	IsConfigured      bool
-	APSetupLocked     bool
-	StatePresent      bool
-	SelectedRegistrar bool
+	bitmap uint8
+}
+
+
+
+func (wi *WPSInfo) SetVersion(v uint8) {
+	wi.bitmap &^= wpsVersionMask
+	wi.bitmap |=  (v << 2) & wpsVersionMask
+}
+
+
+
+func (wi WPSInfo) Version() uint8 {
+	return (wi.bitmap & wpsVersionMask) >> 6
+}
+
+
+
+func (wi *WPSInfo) SetConfig(configured bool) {
+	if configured { wi.bitmap |= wpsConfigMask }
+}
+
+
+
+func (wi WPSInfo) isConfigured() bool {
+	return (wi.bitmap & wpsConfigMask) == wpsConfigMask
+}
+
+
+
+func (wi *WPSInfo) SetAPSetupLock(locked bool) {
+	if locked { wi.bitmap |= wpsAPSetupLocked }
+}
+
+
+
+func (wi WPSInfo) isLocked() bool {
+	return (wi.bitmap & wpsAPSetupLocked) == wpsAPSetupLocked
+}
+
+
+
+func (wi *WPSInfo) SetStatePresence() {
+	wi.bitmap |= wpsStatePresent
+}
+
+
+
+func (wi WPSInfo) isStatePresent() bool {
+	return (wi.bitmap & wpsStatePresent) == wpsStatePresent
+}
+
+
+
+func (wi *WPSInfo) SetRegistrar(selected bool) {
+	if selected { wi.bitmap |= wpsSelectedRegistrar }
+}
+
+
+
+func (wi WPSInfo) selectedRegistrar() bool {
+	return (wi.bitmap & wpsSelectedRegistrar) == wpsSelectedRegistrar
 }
 
 
 
 func (wi WPSInfo) String() string {
-    if wi.Version == 0 && !wi.StatePresent && !wi.APSetupLocked {
+    if wi.Version() == 0 && !wi.isStatePresent() && !wi.isLocked() {
         return "0.0"
     }
 
-    if wi.APSetupLocked {
+    if wi.isLocked() {
         return "Locked"
     }
 
     var b strings.Builder
 
-    b.WriteString(formatVersion(wi.Version))
+    b.WriteString(wi.formatVersion())
 
-	if wi.SelectedRegistrar {
+	if wi.selectedRegistrar() {
 		b.WriteString(" RGT")
 	}
 
-    if wi.StatePresent {
-        if wi.IsConfigured {
+    if wi.isStatePresent() {
+        if wi.isConfigured() {
             b.WriteString(" CONF")
         } else {
             b.WriteString(" UNCONF")
@@ -64,28 +130,25 @@ func (wi WPSInfo) String() string {
 
 
 
-func formatVersion(v uint8) string {
-	major := v >> 4
-	minor := v & 0x0F
-
-	return fmt.Sprintf("%d.%d", major, minor)
+func (wi WPSInfo) formatVersion() string {
+	return fmt.Sprintf("%d.0", wi.Version())
 }
 
 
 
 func (wi WPSInfo) Len() int {
-	if wi.APSetupLocked {
+	if wi.isLocked() {
         return 7
     }
    
 	total := 3  // 0.0 or 1.0 or 2.0
 
-	if wi.SelectedRegistrar {
+	if wi.selectedRegistrar() {
 		total += 4  // ' ' + RGT
 	}
 
-	if wi.StatePresent {
-    	if wi.IsConfigured {
+	if wi.isStatePresent() {
+    	if wi.isConfigured() {
     	    total += 5  // ' ' + conf
     	} else {
     	    total += 7  // ' ' + unconf

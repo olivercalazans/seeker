@@ -62,29 +62,29 @@ func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
 
 		switch t {
 		case attrVersion: 
-    		if l >= 1 && info.Version == 0 {
-    		    info.Version = val[0]
+    		if l >= 1 && info.Version() == 0 {
+    		    info.SetVersion(val[0])
     		}
 
 		case attrWPSState: 
 			if l >= 1 { 
-				info.IsConfigured = val[0] == 2 
-				info.StatePresent = true
+				info.SetConfig(val[0] == 2)
+				info.SetStatePresence()
 			}
 		
 		case attrAPSetupLocked: 
 			if l >= 1 { 
-				info.APSetupLocked = val[0] != 0 
+				info.SetAPSetupLock(val[0] != 0)
 			}
 		
 		case attrSelectedRegistrar:
 		    if l >= 1 {
-		        info.SelectedRegistrar = val[0] != 0 
+		        info.SetRegistrar(val[0] != 0)
 		    }
 
 		case attrVendorExtension:
 			if v := checkVendorExt(l, val); v != 0 {
-    		    info.Version = v
+    		    info.SetVersion(v)
     		}
 		}
 
