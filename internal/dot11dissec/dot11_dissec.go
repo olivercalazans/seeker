@@ -122,7 +122,7 @@ func (dd *Dot11Dissector) cacheIEs() {
                 oui := data[0:3]
                 if oui[0] == 0x00 && oui[1] == 0x50 && oui[2] == 0xF2 {
                     switch data[3] {
-                    case 0x01: dd.wpa1Data = data[4:] // WPA1
+                    case 0x01: dd.wpa1Data = data[4:]  // WPA1
                     case 0x04: dd.wpsData  = data[4:]  // WPS
                     }
                 }

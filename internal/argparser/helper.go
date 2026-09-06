@@ -44,18 +44,3 @@ func DisplayAllHelp(registry map[string]CommandHandler) {
 
 	os.Exit(0)
 }
-
-
-
-func GetFlagMaxLen(flagSettings []Flag) int {
-    var maxLen int
-
-    for _, f := range flagSettings {
-        str := GetInlineFlags(&f)
-        len := len(str)
-        
-        if len > maxLen { maxLen = len }
-    }
-
-    return maxLen
-}

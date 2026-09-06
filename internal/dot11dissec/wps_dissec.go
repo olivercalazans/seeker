@@ -18,28 +18,39 @@
 package dot11dissec
 
 import (
+	"bytes"
 	"encoding/binary"
 	"offscan/internal/models"
 )
 
 
 
-func (dd *Dot11Dissector) GetWPS() models.WPSInfo {
-	var info models.WPSInfo
+const (
+    attrVersion           = 0x104A 
+    attrWPSState          = 0x1044
+    attrAPSetupLocked     = 0x1057
+    attrSelectedRegistrar = 0x1053
+    attrVendorExtension   = 0x1049
+)
 
+
+
+func (dd *Dot11Dissector) GetWPS() models.WPSInfo {
 	if len(dd.wpsData) == 0 {
-		return info
+		return models.WPSInfo{}
 	}
 
-	dd.parseWPS(&info)
-	return info
+	wps := dd.parseWPS()
+	return wps
 }
 
 
 
-func (dd *Dot11Dissector) parseWPS(info *models.WPSInfo) {
+func (dd *Dot11Dissector) parseWPS() models.WPSInfo {
+	var info models.WPSInfo
+
 	lenData := len(dd.wpsData)
-	pos := 0
+	pos     := 0
 
 	for pos+4 <= lenData {
 		t := binary.BigEndian.Uint16(dd.wpsData[pos : pos+2])
@@ -50,14 +61,59 @@ func (dd *Dot11Dissector) parseWPS(info *models.WPSInfo) {
 		val := dd.wpsData[pos+4 : pos+4+l]
 
 		switch t {
-		case 0x104A: if l >= 1 { info.Version = int(val[0]) }
-		case 0x1044: if l >= 1 { info.IsConfigured = val[0] == 1 }
-		case 0x1057: if l >= 1 { info.APSetupLocked = val[0] != 0 }
-		case 0x1008, 0x1053: if l >= 2 { info.ConfigMethods = binary.BigEndian.Uint16(val) }
+		case attrVersion: 
+    		if l >= 1 && info.Version() == 0 {
+    		    info.SetVersion(val[0])
+    		}
+
+		case attrWPSState: 
+			if l >= 1 { 
+				info.SetConfig(val[0] == 2)
+				info.SetStatePresence()
+			}
+		
+		case attrAPSetupLocked: 
+			if l >= 1 { 
+				info.SetAPSetupLock(val[0] != 0)
+			}
+		
+		case attrSelectedRegistrar:
+		    if l >= 1 {
+		        info.SetRegistrar(val[0] != 0)
+		    }
+
+		case attrVendorExtension:
+			if v := checkVendorExt(l, val); v != 0 {
+    		    info.SetVersion(v)
+    		}
 		}
 
 		pos += 4 + l
 	}
 
-	if info.Version == 0 { info.Version = 0x10 }
+	return info
+}
+
+
+
+func checkVendorExt(l int, val []byte) uint8 {
+	if l < 3 || !bytes.Equal(val[:3], []byte{0x00, 0x37, 0x2A}) {
+        return 0
+    }
+
+	subpos := 3
+    for subpos+2 <= l {
+        subType := val[subpos]
+        subLen  := int(val[subpos+1])
+
+        if subpos+2+subLen > l { return 0 }
+        
+		if subType == 0x00 && subLen >= 1 {
+            return val[subpos+2]
+        }
+        
+		subpos += 2 + subLen
+    }
+
+	return 0
 }

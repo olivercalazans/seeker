@@ -18,162 +18,142 @@
 package models
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 )
 
 
 const (
-    methodUSB = 1 << iota // 1 << 0 = 1   (0x0001)
-    methodETHER           // 1 << 1 = 2   (0x0002)
-    methodLAB             // 1 << 2 = 4   (0x0004)
-    methodDISP            // 1 << 3 = 8   (0x0008)
-    methodEXTNFC          // 1 << 4 = 16  (0x0010)
-    methodINTNFC          // 1 << 5 = 32  (0x0020)
-    methodNFCINTF         // 1 << 6 = 64  (0x0040)
-    methodPBC             // 1 << 7 = 128 (0x0080)
-    methodKPAD            // 1 << 8 = 256 (0x0100)
+	wpsVersionMask = 0xC0
+	wpsConfigMask  = 1 << (iota + 2)  // 1 << (0 + 2) = 0x04
+	wpsAPSetupLocked                  // 1 << (1 + 2) = 0x08
+	wpsStatePresent                   // 1 << (2 + 2) = 0x10
+	wpsSelectedRegistrar              // 1 << (3 + 2) = 0x20
 )
 
 
 
 type WPSInfo struct {
-	Version        int
-	IsConfigured   bool
-	ConfigMethods  uint16
-	APSetupLocked  bool
+	bitmap uint8
 }
 
 
 
-func (info WPSInfo) String() string {
-	if info.Version == 0 && !info.IsConfigured && info.ConfigMethods == 0 && !info.APSetupLocked {
-		return "?????"
-	}
-
-	var b strings.Builder
-
-	if info.Version > 0 {
-		b.WriteString("v")
-		b.WriteString(formatVersion(info.Version))
-	}
-
-	if info.IsConfigured {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("configured")
-	} else {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("unconfigured")
-	}
-
-	methods := info.methodsString()
-	if methods != "" {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString(methods)
-	}
-
-	if info.APSetupLocked {
-		if b.Len() > 0 { b.WriteByte(' ') }
-		b.WriteString("locked")
-	}
-
-	return b.String()
+func (wi *WPSInfo) SetVersion(v uint8) {
+	wi.bitmap &^= wpsVersionMask
+	wi.bitmap |=  (v << 2) & wpsVersionMask
 }
 
 
 
-func formatVersion(v int) string {
-	major := v >> 4
-	minor := v & 0x0F
-
-	if minor == 0 {
-		return strconv.Itoa(major)
-	}
-
-	return strconv.Itoa(major) + "." + strconv.Itoa(minor)
+func (wi WPSInfo) Version() uint8 {
+	return (wi.bitmap & wpsVersionMask) >> 6
 }
 
 
 
-func (info WPSInfo) methodsString() string {
-	var b strings.Builder
-	first := true
-
-	appendMethod := func(name string) {
-		if !first { b.WriteByte(' ') }
-		b.WriteString(name)
-		first = false
-	}
-
-	if info.hasUSB()     { appendMethod("USB")     }
-	if info.hasETHER()   { appendMethod("ETHER")   }
-	if info.hasLAB()     { appendMethod("LAB")     }
-	if info.hasDISP()    { appendMethod("DISP")    }
-	if info.hasEXTNFC()  { appendMethod("EXTNFC")  }
-	if info.hasINTNFC()  { appendMethod("INTNFC")  }
-	if info.hasNFCINTF() { appendMethod("NFCINTF") }
-	if info.hasPBC()     { appendMethod("PBC")     }
-	if info.hasKPAD()    { appendMethod("KPAD")    }
-
-	return b.String()
+func (wi *WPSInfo) SetConfig(configured bool) {
+	if configured { wi.bitmap |= wpsConfigMask }
 }
 
 
 
-func (info WPSInfo) hasUSB()     bool { return info.ConfigMethods&methodUSB != 0     }
-func (info WPSInfo) hasETHER()   bool { return info.ConfigMethods&methodETHER != 0   }
-func (info WPSInfo) hasLAB()     bool { return info.ConfigMethods&methodLAB != 0     }
-func (info WPSInfo) hasDISP()    bool { return info.ConfigMethods&methodDISP != 0    }
-func (info WPSInfo) hasEXTNFC()  bool { return info.ConfigMethods&methodEXTNFC != 0  }
-func (info WPSInfo) hasINTNFC()  bool { return info.ConfigMethods&methodINTNFC != 0  }
-func (info WPSInfo) hasNFCINTF() bool { return info.ConfigMethods&methodNFCINTF != 0 }
-func (info WPSInfo) hasPBC()     bool { return info.ConfigMethods&methodPBC != 0     }
-func (info WPSInfo) hasKPAD()    bool { return info.ConfigMethods&methodKPAD != 0    }
+func (wi WPSInfo) isConfigured() bool {
+	return (wi.bitmap & wpsConfigMask) == wpsConfigMask
+}
 
 
 
-func (info WPSInfo) Len() int {
-    total := 0
+func (wi *WPSInfo) SetAPSetupLock(locked bool) {
+	if locked { wi.bitmap |= wpsAPSetupLocked }
+}
 
-    if info.Version > 0 {
-		total += 4  // 1.0v or 2.0v
+
+
+func (wi WPSInfo) isLocked() bool {
+	return (wi.bitmap & wpsAPSetupLocked) == wpsAPSetupLocked
+}
+
+
+
+func (wi *WPSInfo) SetStatePresence() {
+	wi.bitmap |= wpsStatePresent
+}
+
+
+
+func (wi WPSInfo) isStatePresent() bool {
+	return (wi.bitmap & wpsStatePresent) == wpsStatePresent
+}
+
+
+
+func (wi *WPSInfo) SetRegistrar(selected bool) {
+	if selected { wi.bitmap |= wpsSelectedRegistrar }
+}
+
+
+
+func (wi WPSInfo) selectedRegistrar() bool {
+	return (wi.bitmap & wpsSelectedRegistrar) == wpsSelectedRegistrar
+}
+
+
+
+func (wi WPSInfo) String() string {
+    if wi.Version() == 0 && !wi.isStatePresent() && !wi.isLocked() {
+        return "0.0"
     }
 
-    if info.IsConfigured {
-        total += 11  // ' ' + configured(11)
-    } else {
-        total += 13  // ' ' + unconfigured(12)
+    if wi.isLocked() {
+        return "Locked"
     }
 
-	if info.ConfigMethods != 0 || info.APSetupLocked {
-        total++ 
+    var b strings.Builder
+
+    b.WriteString(wi.formatVersion())
+
+	if wi.selectedRegistrar() {
+		b.WriteString(" RGT")
+	}
+
+    if wi.isStatePresent() {
+        if wi.isConfigured() {
+            b.WriteString(" CONF")
+        } else {
+            b.WriteString(" UNCONF")
+        }
     }
 
-    if info.ConfigMethods != 0 {
-        total += info.lenMethods()
-    }
+    return b.String()
+}
 
-    if info.APSetupLocked {
-        total += 7  // ' ' + locked
+
+
+func (wi WPSInfo) formatVersion() string {
+	return fmt.Sprintf("%d.0", wi.Version())
+}
+
+
+
+func (wi WPSInfo) Len() int {
+	if wi.isLocked() {
+        return 7
     }
+   
+	total := 3  // 0.0 or 1.0 or 2.0
+
+	if wi.selectedRegistrar() {
+		total += 4  // ' ' + RGT
+	}
+
+	if wi.isStatePresent() {
+    	if wi.isConfigured() {
+    	    total += 5  // ' ' + conf
+    	} else {
+    	    total += 7  // ' ' + unconf
+    	}
+	}
 
     return total
-}
-
-
-
-func (info WPSInfo) lenMethods() int {
-	var lenMethods int
-
-	if info.hasUSB()     { lenMethods += 4 } // ' ' + USB    
-	if info.hasETHER()   { lenMethods += 6 } // ' ' + ETHER  
-	if info.hasLAB()     { lenMethods += 4 } // ' ' + LAB    
-	if info.hasDISP()    { lenMethods += 5 } // ' ' + DISP   
-	if info.hasEXTNFC()  { lenMethods += 7 } // ' ' + EXTNFC 
-	if info.hasINTNFC()  { lenMethods += 7 } // ' ' + INTNFC 
-	if info.hasNFCINTF() { lenMethods += 8 } // ' ' + NFCINTF
-	if info.hasPBC()     { lenMethods += 4 } // ' ' + PBC    
-	if info.hasKPAD()    { lenMethods += 5 } // ' ' + KPAD   
-
-	return lenMethods
 }
