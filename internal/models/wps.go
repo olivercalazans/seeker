@@ -34,68 +34,68 @@ const (
 
 
 type WPSInfo struct {
-	bitmap uint8
+	bitmask uint8
 }
 
 
 
 func (wi *WPSInfo) SetVersion(v uint8) {
-	wi.bitmap &^= wpsVersionMask
-	wi.bitmap  |= (v >> 4) & wpsVersionMask
+	wi.bitmask &^= wpsVersionMask
+	wi.bitmask  |= (v >> 4) & wpsVersionMask
 }
 
 
 
 func (wi WPSInfo) Version() uint8 {
-	return (wi.bitmap & wpsVersionMask)
+	return (wi.bitmask & wpsVersionMask)
 }
 
 
 
 func (wi *WPSInfo) SetConfig(configured bool) {
-	if configured { wi.bitmap |= wpsConfigMask }
+	if configured { wi.bitmask |= wpsConfigMask }
 }
 
 
 
 func (wi WPSInfo) isConfigured() bool {
-	return (wi.bitmap & wpsConfigMask) == wpsConfigMask
+	return (wi.bitmask & wpsConfigMask) == wpsConfigMask
 }
 
 
 
 func (wi *WPSInfo) SetAPSetupLock(locked bool) {
-	if locked { wi.bitmap |= wpsAPSetupLocked }
+	if locked { wi.bitmask |= wpsAPSetupLocked }
 }
 
 
 
 func (wi WPSInfo) isLocked() bool {
-	return (wi.bitmap & wpsAPSetupLocked) == wpsAPSetupLocked
+	return (wi.bitmask & wpsAPSetupLocked) == wpsAPSetupLocked
 }
 
 
 
 func (wi *WPSInfo) SetStatePresence() {
-	wi.bitmap |= wpsStatePresent
+	wi.bitmask |= wpsStatePresent
 }
 
 
 
 func (wi WPSInfo) isStatePresent() bool {
-	return (wi.bitmap & wpsStatePresent) == wpsStatePresent
+	return (wi.bitmask & wpsStatePresent) == wpsStatePresent
 }
 
 
 
 func (wi *WPSInfo) SetRegistrar(selected bool) {
-	if selected { wi.bitmap |= wpsSelectedRegistrar }
+	if selected { wi.bitmask |= wpsSelectedRegistrar }
 }
 
 
 
 func (wi WPSInfo) selectedRegistrar() bool {
-	return (wi.bitmap & wpsSelectedRegistrar) == wpsSelectedRegistrar
+	return (wi.bitmask & wpsSelectedRegistrar) == wpsSelectedRegistrar
 }
 
 
