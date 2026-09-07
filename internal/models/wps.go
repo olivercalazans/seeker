@@ -138,7 +138,7 @@ func (wi WPSInfo) formatVersion() string {
 
 func (wi WPSInfo) Len() int {
 	if wi.isLocked() {
-        return 7
+        return 6
     }
    
 	total := 3  // 0.0 or 1.0 or 2.0
