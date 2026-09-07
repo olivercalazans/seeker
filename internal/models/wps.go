@@ -24,7 +24,7 @@ import (
 
 
 const (
-	wpsVersionMask = 0xC0
+	wpsVersionMask = 0x03
 	wpsConfigMask  = 1 << (iota + 2)  // 1 << (0 + 2) = 0x04
 	wpsAPSetupLocked                  // 1 << (1 + 2) = 0x08
 	wpsStatePresent                   // 1 << (2 + 2) = 0x10
@@ -41,13 +41,13 @@ type WPSInfo struct {
 
 func (wi *WPSInfo) SetVersion(v uint8) {
 	wi.bitmap &^= wpsVersionMask
-	wi.bitmap |=  (v << 2) & wpsVersionMask
+	wi.bitmap  |= (v >> 4) & wpsVersionMask
 }
 
 
 
 func (wi WPSInfo) Version() uint8 {
-	return (wi.bitmap & wpsVersionMask) >> 6
+	return (wi.bitmap & wpsVersionMask)
 }
 
 
