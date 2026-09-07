@@ -80,7 +80,7 @@ func (ap *arpPoison) execute() {
 
 
 func (ap *arpPoison) initSniffTools() {
-	ap.sniffer = sniffer.NewSniffer(ap.iface, ap.getBPFFilter(), false)
+	ap.sniffer = sniffer.NewSniffer(ap.iface, ap.getBPFFilter(), false, ap.Handler)
 	ap.dissec  = pktdissec.NewPacketDissector()
 	ap.createCtx()
 }
@@ -171,24 +171,24 @@ func (ap *arpPoison) sendPoison() {
 
 
 func (ap *arpPoison) sniffTargetsTraffic() {
-	sniffCh := ap.sniffer.Start()
+	ap.sniffer.Start()
 	ap.displayExecInfo()
+}
 
-	for {
-		select {
-		case <- ap.ctx.Done():
-			return
 
-		default:
-			pkt, ok := <-sniffCh
-			if !ok { return }
-			
-			ap.pkts++
-			ap.dissec.UpdatePkt(pkt)
-			
-			if ap.dissec.IsARP() && ap.dissec.IsArpRequest() {
-				ap.sendRequestedPoison()
-			}
+
+func (ap *arpPoison) Handler(pkt []byte) {
+	select {
+	case <- ap.ctx.Done():
+		return
+		
+	default:
+		
+		ap.pkts++
+		ap.dissec.UpdatePkt(pkt)
+		
+		if ap.dissec.IsARP() && ap.dissec.IsArpRequest() {
+			ap.sendRequestedPoison()
 		}
 	}
 }

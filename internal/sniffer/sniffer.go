@@ -32,7 +32,7 @@ type Sniffer struct {
 	iface         net.Interface
 	filter        string
 	promisc       bool
-	resultCh      chan []byte
+	handler       func([]byte)
 	wg            sync.WaitGroup
 	fd            int
 	epollFd       int
@@ -45,25 +45,26 @@ type Sniffer struct {
 
 
 
-func NewSniffer(iface net.Interface, filter string, promisc bool) *Sniffer {
+func NewSniffer(iface net.Interface, filter string, promisc bool, handler func([]byte)) *Sniffer {
 	return &Sniffer{
-		iface:       iface,
-		filter:      filter,
-		promisc:     promisc,
-		resultCh:    make(chan []byte, 100),
-		fd:          -1,
-		epollFd:     -1,
-		stopEventFd: -1,
+		iface		: iface,
+		filter		: filter,
+		promisc		: promisc,
+		handler		: handler,
+		fd			: -1,
+		epollFd     : -1,
+		stopEventFd : -1,
 	}
 }
 
 
 
-func (s *Sniffer) Start() <-chan []byte {
+
+func (s *Sniffer) Start() {
 	s.closeMu.Lock()
 	defer s.closeMu.Unlock()
 
-	if s.closed || s.fd != -1 { return nil }
+	if s.closed || s.fd != -1 { return }
 
 	if err := s.initRawSocket(); err != nil {
 		utils.Abort(fmt.Sprintf("%v", err))
@@ -83,14 +84,13 @@ func (s *Sniffer) Start() <-chan []byte {
 
 	s.wg.Add(1)
 	go s.captureLoop()
-	return s.resultCh
 }
+
 
 
 
 func (s *Sniffer) captureLoop() {
 	defer s.wg.Done()
-	defer close(s.resultCh)
 
 	events := make([]unix.EpollEvent, 10)
 	buf    := make([]byte, 65536)
@@ -104,7 +104,7 @@ func (s *Sniffer) captureLoop() {
 			return
 		}
 
-		for i := range nEvents{
+		for i := range nEvents {
 			ev := &events[i]
 			fd := int(ev.Fd)
 
@@ -117,6 +117,7 @@ func (s *Sniffer) captureLoop() {
 
 			case fd == s.fd && (ev.Events&unix.EPOLLIN) != 0:
 				n, _, err := unix.Recvfrom(s.fd, buf, 0)
+				
 				if err != nil {
 					if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 						continue
@@ -124,17 +125,12 @@ func (s *Sniffer) captureLoop() {
 					return
 				}
 
-				pkt := make([]byte, n)
-				copy(pkt, buf[:n])
-
-				select {
-				case s.resultCh <- pkt:
-				default:
-				}
+				s.handler(buf[:n]) 
 			}
 		}
 	}
 }
+
 
 
 

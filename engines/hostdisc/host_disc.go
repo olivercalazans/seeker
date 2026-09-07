@@ -53,7 +53,6 @@ type hostDiscovery struct {
     protocols   protocols
     running     atomic.Bool
     sniffer     sniffer.Sniffer
-    snifferCh   <-chan []byte
     wgPktProc   sync.WaitGroup
 }
 
@@ -66,7 +65,6 @@ type protocols struct {
 
 func (hd *hostDiscovery) execute() {
     hd.displayExecInfo()
-    hd.startSniffer()
     hd.startPacketProcessor()
     hd.sendProbes()
     hd.stopPacketProcessor()
@@ -90,13 +88,6 @@ func (hd *hostDiscovery) displayExecInfo() {
     fmt.Printf("[i] Range..: %s - %s\n", first.String(), last.String())
     fmt.Printf("[i] Len IPs: %d\n", length)
     fmt.Printf("[i] Proto..: %s\n", proto)
-}
-
-
-
-func (hd *hostDiscovery) startSniffer() {
-    hd.sniffer   = *sniffer.NewSniffer(hd.iface, hd.getBpfFilter(), false)
-    hd.snifferCh = hd.sniffer.Start()
 }
 
 

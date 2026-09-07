@@ -29,7 +29,6 @@ import (
 type frameProcessor struct {
 	dissector  *dot11dissec.Dot11Dissector
 	idx         uint
-	eventCh     chan dot11Info
 	missBuf     map[station]struct{}
 	netsBuf     map[models.MAC]beacon
 	stasBuf     map[station]struct{}
@@ -42,70 +41,31 @@ func (fp *frameProcessor) init() {
 	fp.netsBuf   = make(map[models.MAC]beacon)
 	fp.stasBuf   = make(map[station]struct{})
 	fp.missBuf   = make(map[station]struct{})
-	fp.eventCh   = make(chan dot11Info, 1024)
 }
 
 
 
-func (fp *frameProcessor) processFrame(sniffCh <-chan []byte) {
-	for {
-		frame, ok := <-sniffCh
-		if !ok { break }
-
-		fp.dissector.UpdatePkt(frame)
-		fp.sendToUpdate()
-	}
-
-	close(fp.eventCh)
-}
-
-
-
-func (fp *frameProcessor) sendToUpdate() {
-	info := dot11Info{}
+func (fp *frameProcessor) Handler(frame []byte) {
+	fp.dissector.UpdatePkt(frame)
 
 	if fp.dissector.IsBeacon {
-		info.isBeacon = true
-		info.bssid    = fp.dissector.GetBSSID()
-		info.chnl     = fp.dissector.GetChannel()
-		info.ssid     = fp.dissector.GetSSID()
+		bssid := fp.dissector.GetBSSID()
+		netInfo := beacon{
+			ssid: fp.dissector.GetSSID(),
+			chnl: fp.dissector.GetChannel(),
+		}
 		
-		select {
-        case fp.eventCh <- info:
-        default:
-        }
-        return
+		fp.netsBuf[bssid] = netInfo
+		fp.associateStas(bssid)
+		return
 	}
 
 	if fp.dissector.IsDataFrm {
 		bssid, staMac, ok := fp.dissector.GetAddrs()
 		if !ok { return }
 		
-		info.isDataFrm = true
-		info.bssid     = bssid
-		info.staMac    = staMac
-
-		select {
-        case fp.eventCh <- info:
-        default:
-        }
-	}
-}
-
-
-
-func (fp *frameProcessor) displayLoop() {
-	for data := range fp.eventCh {
-		if data.isBeacon {
-			netInfo := beacon{ ssid: data.ssid, chnl: data.chnl }
-			fp.netsBuf[data.bssid] = netInfo
-			fp.associateStas(data.bssid)
-		}
-
-		if data.isDataFrm {
-			staInfo := station{ bssid: data.bssid, staMac: data.staMac }
-			fp.addStation(staInfo)
-		}
+		staInfo := station{ bssid: bssid, staMac: staMac }
+		fp.addStation(staInfo)
 	}
 }
 
