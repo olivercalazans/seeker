@@ -89,20 +89,12 @@ func (l2hd *layer2HostDiscovery) startFrameProcessor() {
 	fp := frameProcessor{}
 	fp.init()
 
-    go fp.displayLoop()
-
-	l2hd.sniffer  = sniffer.NewSniffer(l2hd.iface, getBPFFilter(), true)
-	sniffCh      := l2hd.sniffer.Start()
-
+	l2hd.sniffer = sniffer.NewSniffer(l2hd.iface, getBPFFilter(), true, fp.Handler)
+	
 	fmt.Printf("[+] Sniffing 802.11 frames. Press CTRL + C to stop\n\n")
-
-	l2hd.wg.Add(1)
-	go func() {
-		defer l2hd.wg.Done()
-		fp.processFrame(sniffCh)
-	}()
-
 	displayHeader()
+
+	l2hd.sniffer.Start() 
 }
 
 

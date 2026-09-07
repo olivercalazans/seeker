@@ -20,6 +20,7 @@ package hostdisc
 import (
 	"offscan/internal/models"
 	"offscan/internal/pktdissec"
+	"offscan/internal/sniffer"
 )
 
 
@@ -32,23 +33,15 @@ type hostInfo struct {
 
 func (hd *hostDiscovery) startPacketProcessor() {
     hd.dissector = *pktdissec.NewPacketDissector()
-
-    hd.wgPktProc.Add(1)
-    go func() {
-        defer hd.wgPktProc.Done()
-        
-		for {
-            pkt, ok := <-hd.snifferCh
-            if !ok { break }
-            hd.dissector.UpdatePkt(pkt)
-            hd.processPkt()
-        }
-    }()
+    hd.sniffer   = *sniffer.NewSniffer(hd.iface, hd.getBpfFilter(), false, hd.Handler)
+    hd.sniffer.Start()
 }
 
 
 
-func (hd *hostDiscovery) processPkt() {
+func (hd *hostDiscovery) Handler(pkt []byte) {
+    hd.dissector.UpdatePkt(pkt)
+
     if hd.dissector.IsARP() && hd.dissector.IsArpReply() {
         hd.processArpPkt()
         return
