@@ -42,9 +42,7 @@ type wifiMapper struct {
 	iface       net.Interface
 	wInfo       map[wifiData]struct{}
 	sniffer    *sniffer.Sniffer
-	dataCh      chan map[wifiData]struct{}
 	wg          sync.WaitGroup
-	cancel      chan struct{}
 	maxLen      maxLength
 	dissector  *dot11dissec.Dot11Dissector
 }
@@ -81,7 +79,6 @@ func (wm *wifiMapper) Handler(beacon []byte) {
 	wm.dissector.UpdatePkt(beacon)
 	wm.updateInfo()
 }
-
 
 
 
