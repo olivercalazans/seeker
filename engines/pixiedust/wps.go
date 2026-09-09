@@ -78,6 +78,7 @@ func (w *wps) getBeacons() {
 }
 
 
+
 func (w *wps) startBeaconProcessor() {
 	w.dissector = dot11dissec.NewDot11Dissector()
 	w.sniffer   = sniffer.NewSniffer(w.iface, getBPFFilter(), false, w.Handler)
